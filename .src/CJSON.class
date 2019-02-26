@@ -81,7 +81,7 @@ Public Function Open() As Integer
 
 End
 
-Public Function parse(vBuffer As Variant, pParent As String) As Integer
+Public Function parse(vBuffer As Variant, pParent As String, Optional pName As String) As Integer
 ' Method Parse as Integer
 ' Parses JSON data down to a valid value as listed on https://www.json.org/
 ' Also keeps track of the hierarcy of the file with a path
@@ -95,40 +95,42 @@ Dim vBuf As Variant
 Dim iii As Integer
 Dim ret_val As Integer
 Dim object_close_line As String
+Dim object_no As Integer
 Dim array_close_line As String
+Dim array_no As Integer
 
  Select Case TypeOf(vBuffer)
     Case gb.Boolean
       m_line_no += 1
-      Print Hex(m_line_no, m_line_no_width) & " | " & pParent & " : " & IIf(CBool(vBuffer), "True", "False")
+      Print Hex(m_line_no, m_line_no_width) & " | " & pParent & " \"" & pName & "\" : " & IIf(CBool(vBuffer), "True", "False") 
       m_json_col.Add(IIf(CBool(vBuffer), "True", "False"), IIf(pParent = "", "/", pParent))
       m_json_col.Default = IIf(pParent = "", IIf(CBool(vBuffer), "True", "False"), m_json_col.Default)
       m_members_count += 1
       ret_val = Me.boolean
     Case gb.Integer
       m_line_no += 1
-      Print Hex(m_line_no, m_line_no_width) & " | " & pParent & " : " & CInt(vBuffer)
+      Print Hex(m_line_no, m_line_no_width) & " | " & pParent & " \"" & pName & "\" : " & CInt(vBuffer)
       m_json_col.Add(CFloat(vBuffer), IIf(pParent = "", "/", pParent))
       m_json_col.Default = IIf(pParent = "", CInt(vBuffer), m_json_col.Default)
       m_members_count += 1
       ret_val = Me.number
     Case gb.Single
       m_line_no += 1
-      Print Hex(m_line_no, m_line_no_width) & " | " & pParent & " : " & CSingle(vBuffer)
+      Print Hex(m_line_no, m_line_no_width) & " | " & pParent & " \"" & pName & "\" : " & CSingle(vBuffer)
       m_json_col.Add(CFloat(vBuffer), IIf(pParent = "", "/", pParent))
       m_json_col.Default = IIf(pParent = "", CSingle(vBuffer), m_json_col.Default)
       m_members_count += 1
       ret_val = Me.number
     Case gb.Float
       m_line_no += 1
-      Print Hex(m_line_no, m_line_no_width) & " | " & pParent & " : " & CFloat(vBuffer)
+      Print Hex(m_line_no, m_line_no_width) & " | " & pParent & " \"" & pName & "\" : " & CFloat(vBuffer)
       m_json_col.Add(CFloat(vBuffer), IIf(pParent = "", "/", pParent))
       m_json_col.Default = IIf(pParent = "", CFloat(vBuffer), m_json_col.Default)
       m_members_count += 1
       ret_val = Me.number
     Case gb.String
       m_line_no += 1
-      Print Hex(m_line_no, m_line_no_width) & " | " & pParent & " : " & CStr(vBuffer)
+      Print Hex(m_line_no, m_line_no_width) & " | " & pParent & " \"" & pName & "\" : \"" & CStr(vBuffer) & "\""
       
       m_json_col.Add(CStr(vBuffer), IIf(pParent = "", "/", pParent))
       m_json_col.Default = IIf(pParent = "", CStr(vBuffer), m_json_col.Default)
@@ -136,7 +138,7 @@ Dim array_close_line As String
       ret_val = Me.string
     Case gb.Null
       m_line_no += 1
-      Print Hex(m_line_no, m_line_no_width) & " | " & pParent & " : " & "Null"
+      Print Hex(m_line_no, m_line_no_width) & " | " & pParent & " \"" & pName & "\" : " & "null"
       m_json_col.Add("null", IIf(pParent = "", "/", pParent))
       m_json_col.Default = IIf(pParent = "", "null", m_json_col.Default)
       m_members_count += 1
@@ -147,20 +149,21 @@ Dim array_close_line As String
         m_line_no += 1
         m_object_open_count += 1
         
-        Print Hex(m_line_no, m_line_no_width) & " | " & IIf(pParent = "", "/", pParent) & " : " & m_object_open_count & "{ "
+        Print Hex(m_line_no, m_line_no_width) & " | " & pParent & "/" & m_object_open_count & "{  : " & m_object_open_count & "{ "
+        object_no = m_object_open_count
         object_close_line = Hex(m_line_no, m_line_no_width)
-        m_json_col.Add("{", IIf(pParent = "", "/", pParent))
+        m_json_col.Add("{", pParent & "/" & object_no & "{/")
         
         For Each vBuf In VBuffer
           ' Print vBuffer.key & " : "
-          parse(vBuf, pParent & "/" & vBuffer.key)
+          parse(vBuf, pParent & "/" & object_no & "{" & vBuffer.key, vBuffer.key)
         ' parse(vBuffer)
         Next
         m_line_no += 1
         m_object_close_count += 1
         
-        Print Hex(m_line_no, m_line_no_width) & " | " & IIf(pParent = "", "/", pParent) & " : " & m_object_close_count & "} from line " & object_close_line
-        m_json_col.Add("}", IIf(pParent = "", "/", pParent))
+        Print Hex(m_line_no, m_line_no_width) & " | " & pParent & "/" & object_no & "} from line " & object_close_line
+        m_json_col.Add("}", pParent & object_no & "}")
         object_close_line = ""
         ret_val = Me.object
       Else If vBuffer Is Variant[] Then
@@ -168,21 +171,21 @@ Dim array_close_line As String
         m_line_no += 1
         m_array_open_count += 1
         array_close_line = Hex(m_line_no, m_line_no_width)
+        array_no = m_array_open_count
+        Print Hex(m_line_no, m_line_no_width) & " | " & pParent & "/" & array_no & "[ : " & m_array_open_count & "["
+        m_json_col.Add("[", pParent & "/" & array_no & "[")
         
-        Print Hex(m_line_no, m_line_no_width) & " | " & IIf(pParent = "", "/", pParent) & " : " & m_array_open_count & "["
-        m_json_col.Add("[", IIf(pParent = "", "/", pParent))
-        
-        iii = 0
+        iii = 1
         For Each jsbuffer In vBuffer
           ' Print "Array position " & iii
-          parse(jsBuffer, pParent & "/" & iii)
-          iii = iii + 1
+          parse(jsBuffer, pParent & "/" & array_no & "[")
+          iii += 1
         Next
         m_line_no += 1
         m_array_close_count += 1
         
-        Print Hex(m_line_no, m_line_no_width) & " | " & IIf(pParent = "", "/", pParent) & " : " & m_array_close_count & "] from line " & array_close_line
-        m_json_col.Add("]", IIf(pParent = "", "/", pParent))
+        Print Hex(m_line_no, m_line_no_width) & " | " & pParent & "/" & array_no & "] from line " & array_close_line
+        m_json_col.Add("]", pParent & "/" & array_no & "]")
         
         array_close_line = ""
         ret_val = Me.array
