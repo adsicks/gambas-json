@@ -6,6 +6,7 @@ Public Sub cmdDecode_Click()
 Dim iResult As Integer
 ' Dim js As New CJSON
   js.Clear
+  js.LineNoWidth = 6
   js.URL = txtWorkingFile.Text
   iResult = js.open()
   Print "Type is " & js.NamedType & " = " & js.Type
@@ -23,5 +24,11 @@ If Dialog.OpenFile() Then
   Return ' User pressed Cancel -
 Endif
 txtWorkingFile.Text = Dialog.path 
+
+End
+
+Public Sub cmbGetName_Click()
+
+  Print js.GetNameFromPath(txtPath.Text)
 
 End

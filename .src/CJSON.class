@@ -14,6 +14,8 @@ Property Read Members As Integer ' Returns total number of members i.e., "key" :
 ' Read/Write Properties
 
 Property {URL} As String
+Property LineNoWidth As Integer
+
 
 Private m_text As String
 Private m_url As String
@@ -25,14 +27,16 @@ Private m_object_close_count As Integer
 Private m_array_open_count As Integer
 Private m_array_close_count As Integer
 Private m_members_count As Integer
+Private m_line_no As Integer
+Private m_line_no_width As Integer = 4 ' Amount of padding for hexidecimal representation of line numbers. Also sets padding for array and object open locations.
 
-
-
-Function Type_Read() As Integer
+Public Function GetNameFromPath(pKey As String) As Variant
   
-  Return m_js_type
+  Return m_json_col[pKey]
   
 End
+
+
 
 Public Sub Clear()
   ' Method Clear
@@ -47,6 +51,8 @@ Public Sub Clear()
   m_array_open_count = 0
   m_array_close_count = 0
   m_members_count = 0
+  m_line_no = 0
+
   m_url = ""
   m_text = ""
   m_js_type = Me.null
@@ -88,40 +94,49 @@ Dim jsBuffer As Collection
 Dim vBuf As Variant
 Dim iii As Integer
 Dim ret_val As Integer
+Dim object_close_line As String
+Dim array_close_line As String
 
  Select Case TypeOf(vBuffer)
     Case gb.Boolean
-      Print pParent & " : " & IIf(CBool(vBuffer), "True", "False")
+      m_line_no += 1
+      Print Hex(m_line_no, m_line_no_width) & " | " & pParent & " : " & IIf(CBool(vBuffer), "True", "False")
       m_json_col.Add(IIf(CBool(vBuffer), "True", "False"), IIf(pParent = "", "/", pParent))
       m_json_col.Default = IIf(pParent = "", IIf(CBool(vBuffer), "True", "False"), m_json_col.Default)
       m_members_count += 1
       ret_val = Me.boolean
     Case gb.Integer
-      Print pParent & " : " & CInt(vBuffer)
+      m_line_no += 1
+      Print Hex(m_line_no, m_line_no_width) & " | " & pParent & " : " & CInt(vBuffer)
       m_json_col.Add(CFloat(vBuffer), IIf(pParent = "", "/", pParent))
       m_json_col.Default = IIf(pParent = "", CInt(vBuffer), m_json_col.Default)
       m_members_count += 1
       ret_val = Me.number
     Case gb.Single
-      Print pParent & " : " & CSingle(vBuffer)
+      m_line_no += 1
+      Print Hex(m_line_no, m_line_no_width) & " | " & pParent & " : " & CSingle(vBuffer)
       m_json_col.Add(CFloat(vBuffer), IIf(pParent = "", "/", pParent))
       m_json_col.Default = IIf(pParent = "", CSingle(vBuffer), m_json_col.Default)
       m_members_count += 1
       ret_val = Me.number
     Case gb.Float
-      Print pParent & " : " & CFloat(vBuffer)
+      m_line_no += 1
+      Print Hex(m_line_no, m_line_no_width) & " | " & pParent & " : " & CFloat(vBuffer)
       m_json_col.Add(CFloat(vBuffer), IIf(pParent = "", "/", pParent))
       m_json_col.Default = IIf(pParent = "", CFloat(vBuffer), m_json_col.Default)
       m_members_count += 1
       ret_val = Me.number
     Case gb.String
-      Print pParent & " : " & CStr(vBuffer)
+      m_line_no += 1
+      Print Hex(m_line_no, m_line_no_width) & " | " & pParent & " : " & CStr(vBuffer)
+      
       m_json_col.Add(CStr(vBuffer), IIf(pParent = "", "/", pParent))
       m_json_col.Default = IIf(pParent = "", CStr(vBuffer), m_json_col.Default)
       m_members_count += 1
       ret_val = Me.string
     Case gb.Null
-      Print pParent & " : " & "Null"
+      m_line_no += 1
+      Print Hex(m_line_no, m_line_no_width) & " | " & pParent & " : " & "Null"
       m_json_col.Add("null", IIf(pParent = "", "/", pParent))
       m_json_col.Default = IIf(pParent = "", "null", m_json_col.Default)
       m_members_count += 1
@@ -129,32 +144,47 @@ Dim ret_val As Integer
     Case gb.Object
       If vBuffer Is Collection Then 
         m_json_col.Default = IIf(pParent = "", vBuffer, m_json_col.Default)
-        Print pParent & "{ "
-        m_json_col.Add("{", IIf(pParent = "", "/", pParent))
+        m_line_no += 1
         m_object_open_count += 1
+        
+        Print Hex(m_line_no, m_line_no_width) & " | " & IIf(pParent = "", "/", pParent) & " : " & m_object_open_count & "{ "
+        object_close_line = Hex(m_line_no, m_line_no_width)
+        m_json_col.Add("{", IIf(pParent = "", "/", pParent))
+        
         For Each vBuf In VBuffer
           ' Print vBuffer.key & " : "
           parse(vBuf, pParent & "/" & vBuffer.key)
         ' parse(vBuffer)
         Next
-        Print pParent & "}"
-        m_json_col.Add("}", IIf(pParent = "", "/", pParent))
+        m_line_no += 1
         m_object_close_count += 1
+        
+        Print Hex(m_line_no, m_line_no_width) & " | " & IIf(pParent = "", "/", pParent) & " : " & m_object_close_count & "} from line " & object_close_line
+        m_json_col.Add("}", IIf(pParent = "", "/", pParent))
+        object_close_line = ""
         ret_val = Me.object
       Else If vBuffer Is Variant[] Then
         m_json_col.Default = IIf(pParent = "", vBuffer, m_json_col.Default)
-        Print pParent & "["
-        m_json_col.Add("[", IIf(pParent = "", "/", pParent))
+        m_line_no += 1
         m_array_open_count += 1
+        array_close_line = Hex(m_line_no, m_line_no_width)
+        
+        Print Hex(m_line_no, m_line_no_width) & " | " & IIf(pParent = "", "/", pParent) & " : " & m_array_open_count & "["
+        m_json_col.Add("[", IIf(pParent = "", "/", pParent))
+        
         iii = 0
         For Each jsbuffer In vBuffer
           ' Print "Array position " & iii
-          parse(jsBuffer, pParent & iii)
+          parse(jsBuffer, pParent & "/" & iii)
           iii = iii + 1
         Next
-        Print pParent & "]"
-        m_json_col.Add("]", IIf(pParent = "", "/", pParent))
+        m_line_no += 1
         m_array_close_count += 1
+        
+        Print Hex(m_line_no, m_line_no_width) & " | " & IIf(pParent = "", "/", pParent) & " : " & m_array_close_count & "] from line " & array_close_line
+        m_json_col.Add("]", IIf(pParent = "", "/", pParent))
+        
+        array_close_line = ""
         ret_val = Me.array
       Else
    
@@ -201,6 +231,13 @@ Private Function Members_Read() As Integer
 
 End
 
+
+Function Type_Read() As Integer
+  
+  Return m_js_type
+  
+End
+
 Private Function URL_Read() As String
 
   Return m_url
@@ -210,5 +247,17 @@ End
 Private Sub URL_Write(Value As String)
 
   m_url = Value
+
+End
+
+Private Function LineNoWidth_Read() As Integer
+
+  Return m_line_no_width
+
+End
+
+Private Sub LineNoWidth_Write(Value As Integer)
+
+  m_line_no_width = Value
 
 End

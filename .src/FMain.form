@@ -12,4 +12,11 @@
     MoveScaled(47,5,6,4)
     Text = ("") & "..."
   }
+  { txtPath TextBox
+    MoveScaled(4,13,37,4)
+  }
+  { cmbGetName Button
+    MoveScaled(46,13,6,3)
+    Text = ("") & "..."
+  }
 }
