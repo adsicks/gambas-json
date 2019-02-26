@@ -1,0 +1,33 @@
+' Gambas module file
+
+'****
+' Case element
+'  Case ws
+'  Case Value
+'    Case object
+    
+      '{' ws '}'
+      '{' members '}'
+'          Case members
+'            member
+'            member ',' members
+'             case member
+'                 ws string ws ':' element
+'    Case array
+      
+        '[' ws ']'
+        '[' elements ']'
+'    Case string
+        '"' characters '"'
+''    Case number
+ '     IsNumber
+'    Case "true"
+      
+'    Case "false"
+'    Case "null"
+ '     * * * * * * '
+ 
+ 
+'  " is a string"
+' { is an object
+' [ is an Array

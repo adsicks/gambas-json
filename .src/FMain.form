@@ -1,0 +1,15 @@
+# Gambas Form File 3.0
+
+{ Form Form
+  MoveScaled(0,0,64,64)
+  { cmdDecode Button
+    MoveScaled(17,38,22,6)
+  }
+  { txtWorkingFile TextBox
+    MoveScaled(5,5,40,4)
+  }
+  { cmdOpen Button
+    MoveScaled(47,5,6,4)
+    Text = ("") & "..."
+  }
+}

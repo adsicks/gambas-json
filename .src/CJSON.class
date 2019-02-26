@@ -1,0 +1,214 @@
+' Gambas class file
+
+' 00h = 05h are json types
+' 10h - 12h are modes local file, internet url, or text assigned to property
+Public Enum local = &H10, {net} = &H11, {text} = &H12, {object} = &H05, {array} = &H04, {string} = &H03, {number} = &H02, {boolean} = &H01, {null} = &H00
+' Read Only Properties
+Property Read {Type} As Integer ' Returns a type from the above enum for the root document.
+Property Read NamedType As String 'Returns a string that describes the Type property
+Property Read Value As Variant ' Returns the default value or root document
+Property Read Objects As Integer ' Returns the number of objects in the JSON
+Property Read {Arrays} As Integer ' Returns the number of Arrays in the JSON
+Property Read Members As Integer ' Returns total number of members i.e., "key" : "value"
+
+' Read/Write Properties
+
+Property {URL} As String
+
+Private m_text As String
+Private m_url As String
+Private m_json_col As New Collection
+Private m_js_type As Integer ' Type of JSON data at the root as described on the right margin at https://www.json.org/
+' count of objects and arrays. Open and close counts allow for further validation.
+Private m_object_open_count As Integer
+Private m_object_close_count As Integer
+Private m_array_open_count As Integer
+Private m_array_close_count As Integer
+Private m_members_count As Integer
+
+
+
+Function Type_Read() As Integer
+  
+  Return m_js_type
+  
+End
+
+Public Sub Clear()
+  ' Method Clear
+  ' Clears the internal collection of JSON information
+  ' blanks the file name
+  ' Resets object and array open and close counts
+  ' Clears text
+  ' sets type to null
+  
+  m_object_open_count = 0
+  m_object_close_count = 0
+  m_array_open_count = 0
+  m_array_close_count = 0
+  m_members_count = 0
+  m_url = ""
+  m_text = ""
+  m_js_type = Me.null
+  m_json_col.Clear()
+  
+  
+End
+
+
+
+Public Function Open() As Integer
+  ' Method Read as Integer
+  ' Reads a JSON file with File.Load
+  ' Return 0 for success
+  ' Returns Error codes in the Future
+  Dim js As JSONCollection
+  Dim vBuffer As Variant ' variable to hold JSON data while determining the type
+  
+ ' If fname = "" Then fname = m_url
+ ' m_url = fname 
+  m_text = File.Load(m_url)
+  vBuffer = JSON.Decode(m_text, False)
+  m_js_type = parse(vBuffer, "")
+  
+ ' Print TypeOf() & " in file " & m_curr_file
+
+End
+
+Public Function parse(vBuffer As Variant, pParent As String) As Integer
+' Method Parse as Integer
+' Parses JSON data down to a valid value as listed on https://www.json.org/
+' Also keeps track of the hierarcy of the file with a path
+' Unnamed arrays (i.e., the root array if found) is only named as a number
+' Named array elements are followed by the ordinal of their array position
+' returns 0 on success
+' Reutrns a JSTYPE
+
+Dim jsBuffer As Collection
+Dim vBuf As Variant
+Dim iii As Integer
+Dim ret_val As Integer
+
+ Select Case TypeOf(vBuffer)
+    Case gb.Boolean
+      Print pParent & " : " & IIf(CBool(vBuffer), "True", "False")
+      m_json_col.Add(IIf(CBool(vBuffer), "True", "False"), IIf(pParent = "", "/", pParent))
+      m_json_col.Default = IIf(pParent = "", IIf(CBool(vBuffer), "True", "False"), m_json_col.Default)
+      m_members_count += 1
+      ret_val = Me.boolean
+    Case gb.Integer
+      Print pParent & " : " & CInt(vBuffer)
+      m_json_col.Add(CFloat(vBuffer), IIf(pParent = "", "/", pParent))
+      m_json_col.Default = IIf(pParent = "", CInt(vBuffer), m_json_col.Default)
+      m_members_count += 1
+      ret_val = Me.number
+    Case gb.Single
+      Print pParent & " : " & CSingle(vBuffer)
+      m_json_col.Add(CFloat(vBuffer), IIf(pParent = "", "/", pParent))
+      m_json_col.Default = IIf(pParent = "", CSingle(vBuffer), m_json_col.Default)
+      m_members_count += 1
+      ret_val = Me.number
+    Case gb.Float
+      Print pParent & " : " & CFloat(vBuffer)
+      m_json_col.Add(CFloat(vBuffer), IIf(pParent = "", "/", pParent))
+      m_json_col.Default = IIf(pParent = "", CFloat(vBuffer), m_json_col.Default)
+      m_members_count += 1
+      ret_val = Me.number
+    Case gb.String
+      Print pParent & " : " & CStr(vBuffer)
+      m_json_col.Add(CStr(vBuffer), IIf(pParent = "", "/", pParent))
+      m_json_col.Default = IIf(pParent = "", CStr(vBuffer), m_json_col.Default)
+      m_members_count += 1
+      ret_val = Me.string
+    Case gb.Null
+      Print pParent & " : " & "Null"
+      m_json_col.Add("null", IIf(pParent = "", "/", pParent))
+      m_json_col.Default = IIf(pParent = "", "null", m_json_col.Default)
+      m_members_count += 1
+      ret_val = Me.null
+    Case gb.Object
+      If vBuffer Is Collection Then 
+        m_json_col.Default = IIf(pParent = "", vBuffer, m_json_col.Default)
+        Print pParent & "{ "
+        m_json_col.Add("{", IIf(pParent = "", "/", pParent))
+        m_object_open_count += 1
+        For Each vBuf In VBuffer
+          ' Print vBuffer.key & " : "
+          parse(vBuf, pParent & "/" & vBuffer.key)
+        ' parse(vBuffer)
+        Next
+        Print pParent & "}"
+        m_json_col.Add("}", IIf(pParent = "", "/", pParent))
+        m_object_close_count += 1
+        ret_val = Me.object
+      Else If vBuffer Is Variant[] Then
+        m_json_col.Default = IIf(pParent = "", vBuffer, m_json_col.Default)
+        Print pParent & "["
+        m_json_col.Add("[", IIf(pParent = "", "/", pParent))
+        m_array_open_count += 1
+        iii = 0
+        For Each jsbuffer In vBuffer
+          ' Print "Array position " & iii
+          parse(jsBuffer, pParent & iii)
+          iii = iii + 1
+        Next
+        Print pParent & "]"
+        m_json_col.Add("]", IIf(pParent = "", "/", pParent))
+        m_array_close_count += 1
+        ret_val = Me.array
+      Else
+   
+        Print "Unknown?"
+        
+      End If
+  End Select
+ Return ret_val
+End
+
+
+Private Function Value_Read() As Variant
+
+  Return m_json_col.Default
+
+End
+
+
+Private Function Objects_Read() As Integer
+'Returns the count or -1 if there is an error
+  Return IIf(m_object_open_count - m_object_close_count = 0, m_object_close_count, -1)
+
+End
+
+Private Function Arrays_Read() As Integer
+' Returns the number of arrays in the JSON or -1 if there is an error
+  Return IIf(m_array_open_count - m_array_close_count = 0, m_array_close_count, -1)
+
+End
+
+Private Function NamedType_Read() As String
+
+  Dim sBuffer As String
+  
+  sBuffer = Choose(m_js_type, "Boolean", "Number", "String", "Array", "Object")
+  sBuffer = IIf(sBuffer = Null, "null", sBuffer)
+  Return sBuffer
+
+End
+
+Private Function Members_Read() As Integer
+
+  Return m_members_count
+
+End
+
+Private Function URL_Read() As String
+
+  Return m_url
+
+End
+
+Private Sub URL_Write(Value As String)
+
+  m_url = Value
+
+End

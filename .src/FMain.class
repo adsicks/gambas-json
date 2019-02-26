@@ -1,0 +1,27 @@
+' Gambas class file
+
+Public js As New CJSON
+
+Public Sub cmdDecode_Click()
+Dim iResult As Integer
+' Dim js As New CJSON
+  js.Clear
+  js.URL = txtWorkingFile.Text
+  iResult = js.open()
+  Print "Type is " & js.NamedType & " = " & js.Type
+  Print "Object count = " & js.Objects & "Array count = " & js.Arrays
+  Print "Members count = " & js.Members
+  
+End
+
+Public Sub cmdOpen_Click()
+
+    Dialog.Title = "Choose a file"
+Dialog.Filter = ["*.json", "JSON Files", "*", "All files"]
+Dialog.Path = "."
+If Dialog.OpenFile() Then
+  Return ' User pressed Cancel -
+Endif
+txtWorkingFile.Text = Dialog.path 
+
+End
