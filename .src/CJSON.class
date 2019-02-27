@@ -1,6 +1,6 @@
 ' Gambas class file
 
-Event Added(key As String, name As String, value As String)
+Event Added(key As String, name As String, value As String, type As String)
 ' 00h = 05h are json types
 ' 10h - 12h are modes local file, internet url, or text assigned to property
 Public Enum local = &H10, {net} = &H11, {text} = &H12, {object} = &H05, {array} = &H04, {string} = &H03, {number} = &H02, {boolean} = &H01, {null} = &H00
@@ -16,7 +16,7 @@ Property Read Members As Integer ' Returns total number of members i.e., "key" :
 
 Property {URL} As String
 Property LineNoWidth As Integer
-
+Property {Debug} As Integer ' implement debug levels
 
 Private m_text As String
 Private m_url As String
@@ -30,6 +30,7 @@ Private m_array_close_count As Integer
 Private m_members_count As Integer
 Private m_line_no As Integer
 Private m_line_no_width As Integer = 4 ' Amount of padding for hexidecimal representation of line numbers. Also sets padding for array and object open locations.
+Private m_debug As Integer = 0 ' TODO: implement this with different debug levels to be set from the implementation level (public property)
 
 Public Function GetNameFromPath(pKey As String) As Variant
   
@@ -90,11 +91,18 @@ Public Function parse(vBuffer As Variant, pParent As String, Optional pName As S
 ' Named array elements are followed by the ordinal of their array position
 ' returns 0 on success
 ' Reutrns a JSTYPE
+' Moved some repetive functionality to the subroutine AddMember
+' !!!! This function is recursive. Make certain to keep it so !!!!
 
+' temp buffers
 Dim jsBuffer As Collection
 Dim vBuf As Variant
+Dim sBuffer As String
+' counter variable
 Dim iii As Integer
+' reutrn buffer
 Dim ret_val As Integer
+' other counters
 Dim object_close_line As String
 Dim object_no As Integer
 Dim array_close_line As String
@@ -104,79 +112,65 @@ Dim next_name As String
 
  Select Case TypeOf(vBuffer)
     Case gb.Boolean
-      m_line_no += 1
-      ' Print Hex(m_line_no, m_line_no_width) & " | " & pParent & " \"" & pName & "\" : " & IIf(CBool(vBuffer), "True", "False") 
-      Raise Added(pParent, pName, IIf(CBool(vBuffer), "True", "False"))
-      m_json_col.Add(IIf(CBool(vBuffer), "True", "False"), IIf(pParent = "", "/", pParent))
-      m_json_col.Default = IIf(pParent = "", IIf(CBool(vBuffer), "True", "False"), m_json_col.Default)
-      m_members_count += 1
+
+      sBuffer = IIf(CBool(vBuffer), "True", "False")
       ret_val = Me.boolean
+      AddMember(pParent, pName, sBuffer, ret_val)
+      
     Case gb.Integer
-      m_line_no += 1
-      'Print Hex(m_line_no, m_line_no_width) & " | " & pParent & " \"" & pName & "\" : " & CInt(vBuffer)
-      Raise Added(pParent, pName, CStr(vBuffer))
-      m_json_col.Add(CFloat(vBuffer), IIf(pParent = "", "/", pParent))
-      m_json_col.Default = IIf(pParent = "", CInt(vBuffer), m_json_col.Default)
-      m_members_count += 1
+
+      sBuffer = CStr(vBuffer)
       ret_val = Me.number
+      AddMember(pParent, pName, sBuffer, ret_val)
+
     Case gb.Single
-      m_line_no += 1
-      ' Print Hex(m_line_no, m_line_no_width) & " | " & pParent & " \"" & pName & "\" : " & CSingle(vBuffer)
-      Raise Added(pParent, pName, CStr(vBuffer))
-      m_json_col.Add(CFloat(vBuffer), IIf(pParent = "", "/", pParent))
-      m_json_col.Default = IIf(pParent = "", CSingle(vBuffer), m_json_col.Default)
-      m_members_count += 1
+
+      sBuffer = CStr(vBuffer)
       ret_val = Me.number
+      AddMember(pParent, pName, sBuffer, ret_val)
+      
     Case gb.Float
-      m_line_no += 1
-      ' Print Hex(m_line_no, m_line_no_width) & " | " & pParent & " \"" & pName & "\" : " & CFloat(vBuffer)
-      Raise Added(pParent, pName, CStr(vBuffer))
-      m_json_col.Add(CFloat(vBuffer), IIf(pParent = "", "/", pParent))
-      m_json_col.Default = IIf(pParent = "", CFloat(vBuffer), m_json_col.Default)
-      m_members_count += 1
+
+      sBuffer = CStr(vBuffer)
       ret_val = Me.number
+      AddMember(pParent, pName, sBuffer, ret_val)
+      
     Case gb.String
-      m_line_no += 1
-      ' Print Hex(m_line_no, m_line_no_width) & " | " & pParent & " \"" & pName & "\" : \"" & CStr(vBuffer) & "\""
-      Raise Added(pParent, pName, "\"" & CStr(vBuffer) & "\"")
-      m_json_col.Add(CStr(vBuffer), IIf(pParent = "", "/", pParent))
-      m_json_col.Default = IIf(pParent = "", CStr(vBuffer), m_json_col.Default)
-      m_members_count += 1
+
+      sBuffer = "\"" & CStr(vBuffer) & "\""
       ret_val = Me.string
+      AddMember(pParent, pName, sBuffer, ret_val)
+      
     Case gb.Null
-      m_line_no += 1
-      ' Print Hex(m_line_no, m_line_no_width) & " | " & pParent & " \"" & pName & "\" : " & "null"
-      Raise Added(pParent, pName, "null")
-      m_json_col.Add("null", IIf(pParent = "", "/", pParent))
-      m_json_col.Default = IIf(pParent = "", "null", m_json_col.Default)
-      m_members_count += 1
+
+      sBuffer = "null"
       ret_val = Me.null
+      AddMember(pParent, pName, sBuffer, ret_val)
+      
     Case gb.Object
       If vBuffer Is Collection Then 
         m_json_col.Default = IIf(pParent = "", vBuffer, m_json_col.Default)
         m_line_no += 1
         m_object_open_count += 1
         
-        ' Print Hex(m_line_no, m_line_no_width) & " | " & pParent & "/" & m_object_open_count & "{  : " & m_object_open_count & "{ "
+        If m_debug Then Print Hex(m_line_no, m_line_no_width) & " | " & pParent & "/" & m_object_open_count & "{  : " & m_object_open_count & "{ "
         object_no = m_object_open_count
         object_close_line = Hex(m_line_no, m_line_no_width)
         next_name = "{" & object_no & "}{"
         next_key = pParent & next_name
-        Raise Added(next_key, pName, next_name)
+        Raise Added(next_key, next_name, "{", "Object")
         m_json_col.Add(next_name, next_key)
-        ' next_key = pParent & next_name
         For Each vBuf In VBuffer
-          ' Print vBuffer.key & " : "
-          parse(vBuf, next_key & "/" & vBuffer.key, vBuffer.key)
-        ' parse(vBuffer)
+          If m_debug Then Print vBuffer.key & " : "
+          parse(vBuf, next_key & "/" & vBuffer.key, vBuffer.key) ' why this function is recursive
         Next
         m_line_no += 1
         m_object_close_count += 1
         
-       'Print Hex(m_line_no, m_line_no_width) & " | " & pParent & "/" & object_no & "} from line " & object_close_line
+       If m_debug Then Print Hex(m_line_no, m_line_no_width) & " | " & pParent & "/" & object_no & "} from line " & object_close_line
        next_name = "}{" & object_no & "}" 
        next_key = pParent & next_name
-       Raise Added(next_key, next_name, "}")
+       Raise Added(next_key, next_name, "}", "Object")
         m_json_col.Add("}", next_key)
         object_close_line = ""
         ret_val = Me.object
@@ -186,26 +180,25 @@ Dim next_name As String
         m_array_open_count += 1
         array_close_line = Hex(m_line_no, m_line_no_width)
         array_no = m_array_open_count
-        ' Print Hex(m_line_no, m_line_no_width) & " | " & pParent & "/" & array_no & "[ : " & m_array_open_count & "["
-        next_name = "[" & array_no & "][" ' & "/"
+        If m_debug Then Print Hex(m_line_no, m_line_no_width) & " | " & pParent & "/" & array_no & "[ : " & m_array_open_count & "["
+        next_name = "[" & array_no & "][" 
         next_key = pParent & next_name
-        Raise Added(next_key, pName, next_name)
+        Raise Added(next_key, next_name, "[", "Array")
         m_json_col.Add(next_name, next_key)
-       '  next_key = pParent & next_name
         
         iii = 1
         For Each jsbuffer In vBuffer
-          ' Print "Array position " & iii
+          If m_debug Then Print "Array position " & iii
           parse(jsBuffer, next_key & "/")
           iii += 1
         Next
         m_line_no += 1
         m_array_close_count += 1
         
-        ' Print Hex(m_line_no, m_line_no_width) & " | " & pParent & "/" & array_no & "] from line " & array_close_line
+        If m_debug Then Print Hex(m_line_no, m_line_no_width) & " | " & pParent & "/" & array_no & "] from line " & array_close_line
         next_name = "][" & array_no & "]"
         next_key = pParent & next_name
-        Raise Added(next_key, next_name, "]")
+        Raise Added(next_key, next_name, "]", "Array")
         m_json_col.Add("]", next_key)
         
         array_close_line = ""
@@ -217,6 +210,24 @@ Dim next_name As String
       End If
   End Select
  Return ret_val
+End
+
+Private Sub AddMember(pKey As String, pName As String, pValue As String, pType As Integer)
+' Added to clean up some code, make it more readable and easier to maintain
+' this is the repetitive functions found in the Select Case tree in function parse.
+' I also set this up so in the future debugging can be turned on and off easier
+      Dim sType As String
+      m_line_no += 1
+      ' These strings for the types must match what is in the icon collection. consider moving the collection of icons to this class.
+      sType = Choose(pType, "Boolean", "Number", "String", "Array", "Object")
+      sType = IIf(sType = Null, "Null", sType)
+      pKey = IIf(pKey = "", "/", pKey) ' Make sure key value is not null
+      If m_debug Then Print Hex(m_line_no, m_line_no_width) & " | " & pKey & " \"" & pName & "\" : " & IIf(CBool(pValue), "True", "False") 
+      Raise Added(pKey, pName, pValue, sType)
+      m_json_col.Add(pValue, pKey)
+      m_json_col.Default = IIf(m_members_count = 0, pValue, m_json_col.Default)
+      m_members_count += 1
+  
 End
 
 
@@ -283,5 +294,17 @@ End
 Private Sub LineNoWidth_Write(Value As Integer)
 
   m_line_no_width = Value
+
+End
+
+Private Function Debug_Read() As Integer
+
+  Return m_debug
+
+End
+
+Private Sub Debug_Write(Value As Integer)
+
+  m_debug = Value
 
 End

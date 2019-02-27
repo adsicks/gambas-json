@@ -7,6 +7,7 @@ Public Sub cmdDecode_Click()
 Dim iResult As Integer
 ' Dim js As New CJSON
   js.Clear
+  tvJson.Clear()
   js.LineNoWidth = 6
   js.URL = txtWorkingFile.Text
   iResult = js.open()
@@ -55,6 +56,7 @@ End
 
 Public Sub Form_Open()
 Dim lPath As String
+' "Boolean", "Number", "String", "Array", "Object"
 lPath = Application.Path & "/icons/"
    With m_json_icons
     .Add(Picture.Load(lpath & "json-array.png"), "Array")
@@ -67,10 +69,14 @@ lPath = Application.Path & "/icons/"
    End With
 End
 
-Public Sub JParse_Added(key As String, name As String, value As String)
+Public Sub JParse_Added(key As String, name As String, value As String, type As String)
   
-  Print "parent " & modJSONParse.getParent(key), "key " & key, " contains \"" & name & "\" : " & value
-  tvJson.Add(key, name, m_json_icons["Object"], modJSONParse.getParent(key))
+  Print type & " parent " & modJSONParse.getParent(key), "key " & key, " contains \"" & name & "\" : " & value
+  If tvJson.Exist(modJSONParse.getParent(key)) Then 
+    tvJson.Add(key, name, m_json_icons[type], modJSONParse.getParent(key))
+  Else
+    tvJson.Add(key, name, m_json_icons[type])
+  Endif
 End
 
 
