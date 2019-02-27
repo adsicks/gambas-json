@@ -1,6 +1,7 @@
 ' Gambas class file
 
-Public js As New CJSON
+Public js As CJSON = New CJSON As "JParse"
+Private m_json_icons As New Collection
 
 Public Sub cmdDecode_Click()
 Dim iResult As Integer
@@ -32,3 +33,44 @@ Public Sub cmbGetName_Click()
   Print js.GetNameFromPath(txtPath.Text)
 
 End
+
+
+Private Sub DisplayIcons()
+
+  Dim iconKey As String
+  Dim iconName As String
+  Dim v As Variant
+  ' IconViewIcons.Clear()
+
+ 
+  For Each v In m_json_icons
+    
+
+    iconKey = m_json_icons.Key
+   ' IconViewIcons.Add(iconKey, iconKey, v)
+
+  Next
+
+End
+
+Public Sub Form_Open()
+Dim lPath As String
+lPath = Application.Path & "/icons/"
+   With m_json_icons
+    .Add(Picture.Load(lpath & "json-array.png"), "Array")
+   .Add(Picture.Load(lpath & "json-boolean.png"), "Boolean")
+   .Add(Picture.Load(lpath & "json-member.png"), "Member")
+   .Add(Picture.Load(lpath & "json-null.png"), "Null")
+   .Add(Picture.Load(lpath & "json-number.png"), "Number")
+   .Add(Picture.Load(lpath & "json-object.png"), "Object")
+   .Add(Picture.Load(lpath & "json-string.png"), "String")
+   End With
+End
+
+Public Sub JParse_Added(key As String, name As String, value As String)
+  
+  Print "parent " & modJSONParse.getParent(key) & "key " & key & " contains \"" & name & "\" : " & value
+  
+End
+
+

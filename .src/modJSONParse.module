@@ -1,5 +1,20 @@
 ' Gambas module file
 
+Public Function getParent(key As String) As String
+  
+  Dim iPos As Integer
+  Dim sBuffer As String
+  
+  iPos = String.RInStr(key, "/")
+  sBuffer = Left$(key, iPos)
+  
+  Return sBuffer
+  
+  
+End
+
+
+
 '****
 ' Case element
 '  Case ws
