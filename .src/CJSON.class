@@ -160,11 +160,11 @@ Dim next_name As String
         ' Print Hex(m_line_no, m_line_no_width) & " | " & pParent & "/" & m_object_open_count & "{  : " & m_object_open_count & "{ "
         object_no = m_object_open_count
         object_close_line = Hex(m_line_no, m_line_no_width)
-        next_name = "{" & object_no ' & "/"
-        next_key = pParent ' & next_name
+        next_name = "{" & object_no & "}{"
+        next_key = pParent & next_name
         Raise Added(next_key, pName, next_name)
         m_json_col.Add(next_name, next_key)
-        next_key = pParent & next_name
+        ' next_key = pParent & next_name
         For Each vBuf In VBuffer
           ' Print vBuffer.key & " : "
           parse(vBuf, next_key & "/" & vBuffer.key, vBuffer.key)
@@ -174,7 +174,7 @@ Dim next_name As String
         m_object_close_count += 1
         
        'Print Hex(m_line_no, m_line_no_width) & " | " & pParent & "/" & object_no & "} from line " & object_close_line
-       next_name = "}" & object_no ' & "/"
+       next_name = "}{" & object_no & "}" 
        next_key = pParent & next_name
        Raise Added(next_key, next_name, "}")
         m_json_col.Add("}", next_key)
@@ -187,11 +187,11 @@ Dim next_name As String
         array_close_line = Hex(m_line_no, m_line_no_width)
         array_no = m_array_open_count
         ' Print Hex(m_line_no, m_line_no_width) & " | " & pParent & "/" & array_no & "[ : " & m_array_open_count & "["
-        next_name = "[" & array_no ' & "/"
+        next_name = "[" & array_no & "][" ' & "/"
         next_key = pParent & next_name
-        
-        Raise Added(next_key, next_name, "]")
-        m_json_col.Add("[", next_key)
+        Raise Added(next_key, pName, next_name)
+        m_json_col.Add(next_name, next_key)
+       '  next_key = pParent & next_name
         
         iii = 1
         For Each jsbuffer In vBuffer
@@ -203,7 +203,7 @@ Dim next_name As String
         m_array_close_count += 1
         
         ' Print Hex(m_line_no, m_line_no_width) & " | " & pParent & "/" & array_no & "] from line " & array_close_line
-        next_name = "]" & array_no ' & "/"
+        next_name = "][" & array_no & "]"
         next_key = pParent & next_name
         Raise Added(next_key, next_name, "]")
         m_json_col.Add("]", next_key)

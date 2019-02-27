@@ -6,6 +6,7 @@ Public Function getParent(key As String) As String
   Dim sBuffer As String
   
   iPos = String.RInStr(key, "/")
+  iPos = IIf(iPos > 1, iPos - 1, iPos)
   sBuffer = Left$(key, iPos)
   
   Return sBuffer

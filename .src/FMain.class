@@ -69,8 +69,8 @@ End
 
 Public Sub JParse_Added(key As String, name As String, value As String)
   
-  Print "parent " & modJSONParse.getParent(key) & "key " & key & " contains \"" & name & "\" : " & value
-  
+  Print "parent " & modJSONParse.getParent(key), "key " & key, " contains \"" & name & "\" : " & value
+  tvJson.Add(key, name, m_json_icons["Object"], modJSONParse.getParent(key))
 End
 
 
