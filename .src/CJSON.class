@@ -1,9 +1,15 @@
 ' Gambas class file
 
+' CJSON -- Class to Read and parse a JSON file into a collection
+
+
+' Event to send data to calling program for representation in a Tree View or other hierarchical representation.
 Event Added(key As String, name As String, value As String, type As String)
+
 ' 00h = 05h are json types
 ' 10h - 12h are modes local file, internet url, or text assigned to property
 Public Enum local = &H10, {net} = &H11, {text} = &H12, {object} = &H05, {array} = &H04, {string} = &H03, {number} = &H02, {boolean} = &H01, {null} = &H00
+
 ' Read Only Properties
 Property Read {Type} As Integer ' Returns a type from the above enum for the root document.
 Property Read NamedType As String 'Returns a string that describes the Type property
@@ -30,7 +36,7 @@ Private m_array_close_count As Integer
 Private m_members_count As Integer
 Private m_line_no As Integer
 Private m_line_no_width As Integer = 4 ' Amount of padding for hexidecimal representation of line numbers. Also sets padding for array and object open locations.
-Private m_debug As Integer = 0 ' TODO: implement this with different debug levels to be set from the implementation level (public property)
+Private m_debug As Integer = 1 ' TODO: implement this with different debug levels to be set from the implementation level (public property)
 
 Public Function GetNameFromPath(pKey As String) As Variant
   
@@ -89,7 +95,6 @@ Public Function parse(vBuffer As Variant, pParent As String, Optional pName As S
 ' Also keeps track of the hierarcy of the file with a path
 ' Unnamed arrays (i.e., the root array if found) is only named as a number
 ' Named array elements are followed by the ordinal of their array position
-' returns 0 on success
 ' Reutrns a JSTYPE
 ' Moved some repetive functionality to the subroutine AddMember
 ' !!!! This function is recursive. Make certain to keep it so !!!!
@@ -109,6 +114,8 @@ Dim array_close_line As String
 Dim array_no As Integer
 Dim next_key As String
 Dim next_name As String
+Dim block_name As String ' Name of current object or array
+Dim display_name As String ' Name of object or array to be displayed in GUI
 
  Select Case TypeOf(vBuffer)
     Case gb.Boolean
@@ -153,15 +160,25 @@ Dim next_name As String
         m_line_no += 1
         m_object_open_count += 1
         
-        If m_debug Then Print Hex(m_line_no, m_line_no_width) & " | " & pParent & "/" & m_object_open_count & "{  : " & m_object_open_count & "{ "
+        block_name = Right(pParent, Len(pParent) - RInStr(pParent, "/")) ' name of current block
+              
+        If m_debug Then
+          Print Hex(m_line_no, m_line_no_width) & " | " & pParent & "/" & m_object_open_count & "{  : " & m_object_open_count & "{ "
+          Print "Found Object Block named " & block_name 
+        Endif
+        
+       
         object_no = m_object_open_count
         object_close_line = Hex(m_line_no, m_line_no_width)
         next_name = "{" & object_no & "}{"
         next_key = pParent & next_name
-        Raise Added(next_key, next_name, "{", "Object")
+        display_name = IIf(block_name = "", next_name, block_name)
+        next_name = next_name & block_name
+        Raise Added(next_key, display_name, "{", "Object")
         m_json_col.Add(next_name, next_key)
+        
         For Each vBuf In VBuffer
-          If m_debug Then Print vBuffer.key & " : "
+          If m_debug Then Print " Block name " & block_name & " Contains " & vBuffer.key & " : " 
           parse(vBuf, next_key & "/" & vBuffer.key, vBuffer.key) ' why this function is recursive
         Next
         m_line_no += 1
@@ -170,8 +187,10 @@ Dim next_name As String
        If m_debug Then Print Hex(m_line_no, m_line_no_width) & " | " & pParent & "/" & object_no & "} from line " & object_close_line
        next_name = "}{" & object_no & "}" 
        next_key = pParent & next_name
-       Raise Added(next_key, next_name, "}", "Object")
-        m_json_col.Add("}", next_key)
+       display_name = IIf(block_name = "", next_name, block_name)
+       next_name = next_name & block_name
+       Raise Added(next_key, display_name, "}", "Object")
+        m_json_col.Add(next_name, next_key)
         object_close_line = ""
         ret_val = Me.object
       Else If vBuffer Is Variant[] Then
@@ -180,15 +199,22 @@ Dim next_name As String
         m_array_open_count += 1
         array_close_line = Hex(m_line_no, m_line_no_width)
         array_no = m_array_open_count
-        If m_debug Then Print Hex(m_line_no, m_line_no_width) & " | " & pParent & "/" & array_no & "[ : " & m_array_open_count & "["
+        block_name = Right(pParent, Len(pParent) - RInStr(pParent, "/")) ' name of current block
+        
+        If m_debug Then 
+          Print Hex(m_line_no, m_line_no_width) & " | " & pParent & "/" & array_no & "[ : " & m_array_open_count & "["
+          Print "Found Array Block named " & block_name 
+        Endif
+        
         next_name = "[" & array_no & "][" 
         next_key = pParent & next_name
+        next_name = IIf(block_name = "", next_name, next_name & block_name)
         Raise Added(next_key, next_name, "[", "Array")
         m_json_col.Add(next_name, next_key)
         
         iii = 1
         For Each jsbuffer In vBuffer
-          If m_debug Then Print "Array position " & iii
+          If m_debug Then Print "Array position " & iii & " in block named " & block_name
           parse(jsBuffer, next_key & "/")
           iii += 1
         Next
@@ -198,6 +224,7 @@ Dim next_name As String
         If m_debug Then Print Hex(m_line_no, m_line_no_width) & " | " & pParent & "/" & array_no & "] from line " & array_close_line
         next_name = "][" & array_no & "]"
         next_key = pParent & next_name
+        next_name = IIf(block_name = "", next_name, next_name & block_name)
         Raise Added(next_key, next_name, "]", "Array")
         m_json_col.Add("]", next_key)
         
