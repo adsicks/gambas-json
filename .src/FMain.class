@@ -12,15 +12,11 @@ Dim iResult As Integer
   js.LineNoWidth = 6
   js.URL = txtWorkingFile.Text
   iResult = js.open()
-  ' Print "Type is " & js.NamedType & " = " & js.Type
-  ' Print "Object count = " & js.Objects & "Array count = " & js.Arrays
-  ' Print "Members count = " & js.Members
-  ' 
 End
 
 Public Sub cmdOpen_Click()
 
-    Dialog.Title = "Choose a file"
+Dialog.Title = "Choose a file"
 Dialog.Filter = ["*.json", "JSON Files", "*", "All files"]
 Dialog.Path = "."
 If Dialog.OpenFile() Then
