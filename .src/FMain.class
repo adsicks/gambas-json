@@ -3,6 +3,7 @@
 Public js As CJSON = New CJSON As "JParse"
 Private m_json_icons As New Collection
 
+
 Public Sub cmdDecode_Click()
 Dim iResult As Integer
 ' Dim js As New CJSON
@@ -11,10 +12,10 @@ Dim iResult As Integer
   js.LineNoWidth = 6
   js.URL = txtWorkingFile.Text
   iResult = js.open()
-  Print "Type is " & js.NamedType & " = " & js.Type
-  Print "Object count = " & js.Objects & "Array count = " & js.Arrays
-  Print "Members count = " & js.Members
-  
+  ' Print "Type is " & js.NamedType & " = " & js.Type
+  ' Print "Object count = " & js.Objects & "Array count = " & js.Arrays
+  ' Print "Members count = " & js.Members
+  ' 
 End
 
 Public Sub cmdOpen_Click()
@@ -56,6 +57,8 @@ End
 
 Public Sub Form_Open()
 Dim lPath As String
+Dim lFlags As New Byte[2]
+
 ' "Boolean", "Number", "String", "Array", "Object"
 lPath = Application.Path & "/icons/"
    With m_json_icons
@@ -67,16 +70,27 @@ lPath = Application.Path & "/icons/"
    .Add(Picture.Load(lpath & "json-object.png"), "Object")
    .Add(Picture.Load(lpath & "json-string.png"), "String")
    End With
+   lFlags[0] = 0 ' To turn it all on use &H30
+   lFlags[1] = 0 ' To turn it all on use &H30
+   zns.debugger = New CDebug(lFlags)
 End
+
 
 Public Sub JParse_Added(key As String, name As String, value As String, type As String)
   
-  Print type & " parent " & modJSONParse.getParent(key), "key " & key, " contains \"" & name & "\" : " & value
+  zns.debugger.Message(type & " parent " & modJSONParse.getParent(key) & "key " & key & " contains \"" & name & "\" : " & value, LogLevel.Info)
   If tvJson.Exist(modJSONParse.getParent(key)) Then 
     tvJson.Add(key, name, m_json_icons[type], modJSONParse.getParent(key))
   Else
     tvJson.Add(key, name, m_json_icons[type])
   Endif
+End
+
+
+Public Sub JParse_DebugMessage(msg As String, iLevel As Integer)
+  
+  zns.debugger.Message(msg, iLevel)
+  
 End
 
 
@@ -92,12 +106,9 @@ Public Sub tvJson_Click()
 End
 
 Public Sub cmdUnitTest_Click()
-  Dim x As Variant
-  ' modUnitTest.UnitTests(js, tvJson)
+  
+  modUnitTest.UnitTests(js, tvJson)
   ' modUnitTest.PrintDirectory("./json-test")
-  Dim p As New Byte[2]
-  p[0] = 54
-  p[1] = 22 
-  x = New CDebug(p)
 
+  
 End

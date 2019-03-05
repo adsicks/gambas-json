@@ -6,6 +6,8 @@
 ' Event to send data to calling program for representation in a Tree View or other hierarchical representation.
 Event Added(key As String, name As String, value As String, type As String)
 
+Event DebugMessage(msg As String, iLevel As Integer)
+
 ' 00h = 05h are json types
 ' 10h - 12h are modes local file, internet url, or text assigned to property
 Public Enum local = &H10, {net} = &H11, {text} = &H12, {object} = &H05, {array} = &H04, {string} = &H03, {number} = &H02, {boolean} = &H01, {null} = &H00
@@ -163,13 +165,15 @@ Dim display_name As String ' Name of object or array to be displayed in GUI
         block_name = Right(pParent, Len(pParent) - RInStr(pParent, "/")) ' name of current block
               
         If m_debug Then
-          Print Hex(m_line_no, m_line_no_width) & " | " & pParent & "/" & m_object_open_count & "{  : " & m_object_open_count & "{ "
-          Print "Found Object Block named " & block_name 
+          Raise DebugMessage(Hex$(m_line_no, m_line_no_width) & " | " & pParent & "/" & m_object_open_count & "{  : " & m_object_open_count & "{ ", LogLevel.Info)
+          Raise DebugMessage("Found Object Block named " & block_name, LogLevel.Info)
+          ' Print Hex(m_line_no, m_line_no_width) & " | " & pParent & "/" & m_object_open_count & "{  : " & m_object_open_count & "{ "
+          ' Print "Found Object Block named " & block_name 
         Endif
         
        
         object_no = m_object_open_count
-        object_close_line = Hex(m_line_no, m_line_no_width)
+        object_close_line = Hex$(m_line_no, m_line_no_width)
         next_name = "{" & object_no & "}{"
         next_key = pParent & next_name
         display_name = IIf(block_name = "", next_name, block_name)
@@ -178,13 +182,13 @@ Dim display_name As String ' Name of object or array to be displayed in GUI
         m_json_col.Add(next_name, next_key)
         
         For Each vBuf In VBuffer
-          If m_debug Then Print " Block name " & block_name & " Contains " & vBuffer.key & " : " 
+          If m_debug Then Raise DebugMessage(" Block name " & block_name & " Contains " & vBuffer.key & " : ", LogLevel.Info)
           parse(vBuf, next_key & "/" & vBuffer.key, vBuffer.key) ' why this function is recursive
         Next
         m_line_no += 1
         m_object_close_count += 1
         
-       If m_debug Then Print Hex(m_line_no, m_line_no_width) & " | " & pParent & "/" & object_no & "} from line " & object_close_line
+       If m_debug Then Raise DebugMessage(Hex$(m_line_no, m_line_no_width) & " | " & pParent & "/" & object_no & "} from line " & object_close_line, LogLevel.Info)
        next_name = "}{" & object_no & "}" 
        next_key = pParent & next_name
        display_name = IIf(block_name = "", next_name, block_name)
@@ -202,8 +206,10 @@ Dim display_name As String ' Name of object or array to be displayed in GUI
         block_name = Right(pParent, Len(pParent) - RInStr(pParent, "/")) ' name of current block
         
         If m_debug Then 
-          Print Hex(m_line_no, m_line_no_width) & " | " & pParent & "/" & array_no & "[ : " & m_array_open_count & "["
-          Print "Found Array Block named " & block_name 
+          Raise DebugMessage(Hex$(m_line_no, m_line_no_width) & " | " & pParent & "/" & array_no & "[ : " & m_array_open_count & "[", LogLevel.Info)
+          Raise DebugMessage("Found Array Block named " & block_name, LogLevel.Info)
+          ' Print Hex(m_line_no, m_line_no_width) & " | " & pParent & "/" & array_no & "[ : " & m_array_open_count & "["
+          ' Print "Found Array Block named " & block_name 
         Endif
         
         next_name = "[" & array_no & "][" 
@@ -214,14 +220,14 @@ Dim display_name As String ' Name of object or array to be displayed in GUI
         
         iii = 1
         For Each jsbuffer In vBuffer
-          If m_debug Then Print "Array position " & iii & " in block named " & block_name
+          If m_debug Then Raise DebugMessage("Array position " & iii & " in block named " & block_name, LogLevel.Info)
           parse(jsBuffer, next_key & "/")
           iii += 1
         Next
         m_line_no += 1
         m_array_close_count += 1
         
-        If m_debug Then Print Hex(m_line_no, m_line_no_width) & " | " & pParent & "/" & array_no & "] from line " & array_close_line
+        If m_debug Then Raise DebugMessage(Hex(m_line_no, m_line_no_width) & " | " & pParent & "/" & array_no & "] from line " & array_close_line, LogLevel.Info)
         next_name = "][" & array_no & "]"
         next_key = pParent & next_name
         next_name = IIf(block_name = "", next_name, next_name & block_name)
@@ -232,7 +238,8 @@ Dim display_name As String ' Name of object or array to be displayed in GUI
         ret_val = Me.array
       Else
    
-        Print "Unknown?"
+        ' Print "Unknown?"
+        Raise DebugMessage("Ignoring Unknown Type at line " & Hex(m_line_no, m_line_no_width), LogLevel.Warning)
         
       End If
   End Select
@@ -249,7 +256,7 @@ Private Sub AddMember(pKey As String, pName As String, pValue As String, pType A
       sType = Choose(pType, "Boolean", "Number", "String", "Array", "Object")
       sType = IIf(sType = Null, "Null", sType)
       pKey = IIf(pKey = "", "/", pKey) ' Make sure key value is not null
-      If m_debug Then Print Hex(m_line_no, m_line_no_width) & " | " & pKey & " \"" & pName & "\" : " & IIf(CBool(pValue), "True", "False") 
+      If m_debug Then Raise DebugMessage(Hex(m_line_no, m_line_no_width) & " | " & pKey & " \"" & pName & "\" : " & IIf(CBool(pValue), "True", "False"), LogLevel.Info)
       Raise Added(pKey, pName, pValue, sType)
       m_json_col.Add(pValue, pKey)
       m_json_col.Default = IIf(m_members_count = 0, pValue, m_json_col.Default)

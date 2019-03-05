@@ -36,6 +36,9 @@ Private m_ConsoleLog As ConsoleHandler
 Public Sub _new(Optional pFlags As Byte[])
   
   Dim lIsSet As Boolean
+  Dim sLogType As String
+  Dim sLogFileName As String
+  
   lIsSet = Not IsNull(pFlags)
   If lIsSet And If pFlags.Count <> 2 Then
     ' Raise an error here for the caller
@@ -56,17 +59,35 @@ Public Sub _new(Optional pFlags As Byte[])
       m_flags[flag_file] = m_flags[flag_file] Or &H40 'Turn off file
 
   End If
-  m_ConsoleLog = New ConsoleHandler(1, 1)
-  m_ConsoleLog.Open
-  m_ConsoleLog.Level = LogLevel.Debug
-  m_ConsoleLog.write("Hello Log!!!", LogLevel.debug)
-  m_ConsoleLog.Close
   
-  m_FileLog = New FileHandler(GenerateLogFileName(), 1)
-  m_FileLog.Open
-  m_FileLog.Level = LogLevel.Debug
-  m_FileLog.write("Hello Log!!!", LogLevel.debug)
-  m_FileLog.Close
+ 
+  ' Set up logging.
+  m_MainLog = New ComplexLogger
+  m_MainLog.Handlers[0].Level = 0 ' complex logger seems to automagically create a Console object. We want to use the one we added.
+  
+  If Not ((m_flags[flag_console] And &H40) = &40) Then ' move these checks to another function that returns the bool
+    m_ConsoleLog = New ConsoleHandler(1, 1)
+    m_ConsoleLog.Open
+    m_ConsoleLog.Level = m_flags[flag_console] And &H1F 'LogLevel.Debug
+    m_MainLog.addHandler(m_ConsoleLog)
+    sLogType = " Console Handler "
+  End If
+  ' m_ConsoleLog.write("Hello Log!!!", LogLevel.debug)
+  ' m_ConsoleLog.Close
+  If Not ((m_flags[flag_file] And &H40) = &40) Then
+    slogFileName = GenerateLogFileName()
+    m_FileLog = New FileHandler(sLogFileName, 1)
+    m_FileLog.Open
+    m_FileLog.Level = m_flags[flag_file] And &H1F ' LogLevel.Debug
+  ' m_FileLog.write("Hello Log!!!", LogLevel.debug)
+  ' m_FileLog.Close
+    m_MainLog.addHandler(m_FileLog)
+    sLogType &= " File Handler to file: " & sLogFileName
+  End If
+  ' Print "About to begin"
+ ' m_MainLog.Begin
+  m_MainLog.Log("Logger Started with " & Trim(sLogType), LogLevel.Info)
+ ' m_MainLog.Close
 End
 
 Private Function GenerateLogFileName() As String
@@ -76,3 +97,11 @@ Private Function GenerateLogFileName() As String
   Return Application.path &/ "log" &/ Year(a) & Hex(Week(a), 2) & Hex(WeekDay(a)) & Hex(Hour(a), 2) & Hex(Minute(a), 2) & Hex(Second(a), 2) & ".log"
   
 End
+
+Public Function Message(msg As String, iLevel As Integer) As Integer
+  ' Passes message and level on to complex logger, reutrns status
+  m_MainLog.Log(msg, iLevel)
+  
+  
+End
+

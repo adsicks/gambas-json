@@ -1,0 +1,7 @@
+' Gambas module file
+
+' ZNS namespace module
+' JPZ 03-05-2019 Initial Concepts
+
+Public debugger As CDebug
+

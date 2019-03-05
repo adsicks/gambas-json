@@ -1,5 +1,7 @@
 ' Gambas module file
 
+
+
 Public Sub PrintDirectory(path As String)
   
   Dim sFile As String
@@ -16,20 +18,29 @@ Public Sub UnitTests(js As CJSON, tvJSON As TreeView)
   Dim sFile As String
   Dim iResult As Integer
   
+  zns.debugger.Message("******BEGIN UNIT TEST", LogLevel.Info)
   For Each sFile In Dir("./json-test", "*.json")
-    Print "****** Begin File " & sFile & " Results"
+    zns.debugger.Message("UNIT TEST * ****** Begin File " & sFile & " Results", LogLevel.Info)
+    ' Print "****** Begin File " & sFile & " Results"
     js.Clear
     tvJson.Clear()
     js.LineNoWidth = 6
     js.URL = "./json-test" &/ sFile
     iResult = js.open()
-    Print "Type is " & js.NamedType & " = " & js.Type
-    Print "Object count = " & js.Objects & " Array count = " & js.Arrays
-    Print "Members count = " & js.Members
-    Print "****** End File " & sFile & " Results"
-    If Message.Question(sFile & Chr$(10) & "Continue?", "yes", "no") = 2 Then Return
+    zns.debugger.Message("UNIT TEST * Type is " & js.NamedType & " = " & js.Type, LogLevel.Info)
+    ' Print "Type is " & js.NamedType & " = " & js.Type
+    zns.debugger.Message("UNIT TEST * Object count = " & js.Objects & " Array count = " & js.Arrays, LogLevel.info)
+    'Print "Object count = " & js.Objects & " Array count = " & js.Arrays
+    zns.debugger.Message("UNIT TEST * Members count = " & js.Members, LogLevel.Info)
+    ' Print "Members count = " & js.Members
+     zns.debugger.Message("UNIT TEST * ****** End File " & sFile & " Results", LogLevel.Info)
+    ' Print "****** End File " & sFile & " Results"
+    If Message.Question(sFile & Chr$(10) & "Continue?", "yes", "no") = 2 Then 
+      zns.debugger.Message("UNIT TEST * Ended by User", LogLevel.info)
+      Break
+    End If  
     
   Next
-    
+  zns.debugger.Message("******END UNIT TEST", LogLevel.Info)
   
 End
