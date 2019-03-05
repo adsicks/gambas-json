@@ -12,3 +12,5 @@ vgcore.*
 .gambas/*
 .settings
 #----
+# Ignore any log files that were created. We don't need to share those in this repo.
+*.log
