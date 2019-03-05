@@ -1,0 +1,32 @@
+' Gambas module file
+
+Public Sub PrintDirectory(path As String)
+  
+  Dim sFile As String
+  
+  For Each sFile In Dir(path, "*.json")
+    Print sFile
+  Next
+
+
+End Sub
+
+Public Sub UnitTests(js As CJSON, tvJSON As TreeView)
+  
+  Dim sFile As String
+  Dim iResult As Integer
+  
+  For Each sFile In Dir("./json-test", "*.json")
+    js.Clear
+    tvJson.Clear()
+    js.LineNoWidth = 6
+    js.URL = "./json-test" &/ sFile
+    iResult = js.open()
+    Print "Type is " & js.NamedType & " = " & js.Type
+    Print "Object count = " & js.Objects & " Array count = " & js.Arrays
+    Print "Members count = " & js.Members
+    If Message.Question(sFile & Chr$(10) & "Continue?", "yes", "no") = 2 Then Return
+  Next
+    
+  
+End

@@ -90,3 +90,10 @@ Public Sub tvJson_Click()
   
 
 End
+
+Public Sub cmdUnitTest_Click()
+
+  modUnitTest.UnitTests(js, tvJson)
+  modUnitTest.PrintDirectory("./json-test")
+  
+End

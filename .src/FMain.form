@@ -22,4 +22,7 @@
   { tvJson TreeView
     MoveScaled(1,1,34,49)
   }
+  { cmdUnitTest Button
+    MoveScaled(83,44,18,7)
+  }
 }
