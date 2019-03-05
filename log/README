@@ -1,0 +1,1 @@
+This folder is used to store log files. The files are name using a naming scheme: Year + 2 char hex representing week of year + 2 char hex day of week + 2 char hex hour + 2 char hex minute + 2 char hex second. This way we can easily purge logs in this folder by time. New log files are created for every run that uses logging.
