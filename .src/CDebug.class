@@ -1,1 +1,78 @@
 ' Gambas class file
+
+' JPZ 03-05-2019
+' Class to log error and debugging information.
+' Implements a complex logger
+
+' Flags as 2 Bytes of Flags (16 Flags). First Byte is for Console, Second Byte is for file
+' 0000H = Default
+' 0001H = Critical
+' 0002H = Error
+' 0004H = Warning
+' 0008H = Info
+' 0010H = Debug
+' 0020H = turns On console / file
+' 0040H = turns off(over rides other flags)
+' 0080H = Default
+' 0100H = Critical
+' 0200H = Error
+' 0400H = Warning
+' 0800H = Info
+' 1000H = Debug
+' 2000H = turns On console / file
+' 4000H = turns off(over rides other flags)
+Private m_flags[2] As Byte
+' Array positions
+Private flag_console As Integer = 0
+Private flag_file As Integer = 1
+
+' Private members for loggers
+Private m_MainLog As ComplexLogger
+Private m_FileLog As FileHandler
+Private m_ConsoleLog As ConsoleHandler
+
+' Special Methods
+
+Public Sub _new(Optional pFlags As Byte[])
+  
+  Dim lIsSet As Boolean
+  lIsSet = Not IsNull(pFlags)
+  If lIsSet And If pFlags.Count <> 2 Then
+    ' Raise an error here for the caller
+    Error.Raise("Bad Creation Parameter")
+    Print "Error!!"
+    Return
+  Endif
+    
+  If lIsSet Then
+      ' if they are set just pass them on in....   
+      m_flags[flag_file] = pFlags[flag_file]
+      m_flags[flag_console] = pFlags[flag_console]
+  Else
+      'set defaults
+      m_flags[flag_console] = m_flags[flag_console] Or &H20
+      m_flags[flag_console] = m_flags[flag_console] Or CByte(2 ^ LogLevel.Error)
+      'TODO: Set these flag values as constants for easier code reading
+      m_flags[flag_file] = m_flags[flag_file] Or &H40 'Turn off file
+
+  End If
+  m_ConsoleLog = New ConsoleHandler(1, 1)
+  m_ConsoleLog.Open
+  m_ConsoleLog.Level = LogLevel.Debug
+  m_ConsoleLog.write("Hello Log!!!", LogLevel.debug)
+  m_ConsoleLog.Close
+  
+  m_FileLog = New FileHandler(GenerateLogFileName(), 1)
+  m_FileLog.Open
+  m_FileLog.Level = LogLevel.Debug
+  m_FileLog.write("Hello Log!!!", LogLevel.debug)
+  m_FileLog.Close
+End
+
+Private Function GenerateLogFileName() As String
+  
+  Dim a As Date
+  a = Now
+  Return Application.path &/ "log" &/ Year(a) & Hex(Week(a), 2) & Hex(WeekDay(a)) & Hex(Hour(a), 2) & Hex(Minute(a), 2) & Hex(Second(a), 2) & ".log"
+  
+End

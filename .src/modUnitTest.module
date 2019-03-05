@@ -17,6 +17,7 @@ Public Sub UnitTests(js As CJSON, tvJSON As TreeView)
   Dim iResult As Integer
   
   For Each sFile In Dir("./json-test", "*.json")
+    Print "****** Begin File " & sFile & " Results"
     js.Clear
     tvJson.Clear()
     js.LineNoWidth = 6
@@ -25,7 +26,9 @@ Public Sub UnitTests(js As CJSON, tvJSON As TreeView)
     Print "Type is " & js.NamedType & " = " & js.Type
     Print "Object count = " & js.Objects & " Array count = " & js.Arrays
     Print "Members count = " & js.Members
+    Print "****** End File " & sFile & " Results"
     If Message.Question(sFile & Chr$(10) & "Continue?", "yes", "no") = 2 Then Return
+    
   Next
     
   

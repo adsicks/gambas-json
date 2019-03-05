@@ -92,8 +92,12 @@ Public Sub tvJson_Click()
 End
 
 Public Sub cmdUnitTest_Click()
+  Dim x As Variant
+  ' modUnitTest.UnitTests(js, tvJson)
+  ' modUnitTest.PrintDirectory("./json-test")
+  Dim p As New Byte[2]
+  p[0] = 54
+  p[1] = 22 
+  x = New CDebug(p)
 
-  modUnitTest.UnitTests(js, tvJson)
-  modUnitTest.PrintDirectory("./json-test")
-  
 End
