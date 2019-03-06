@@ -66,15 +66,15 @@ lPath = Application.Path & "/icons/"
    .Add(Picture.Load(lpath & "json-object.png"), "Object")
    .Add(Picture.Load(lpath & "json-string.png"), "String")
    End With
-   lFlags[0] = &H30 ' To turn it all on use &H30
-   lFlags[1] = 0 ' To turn it all on use &H30
+   lFlags[0] = 0 ' &H30 ' To turn it all on use &H30
+   lFlags[1] = &H30 '&H30 ' To turn it all on use &H30
    zns.debugger = New CDebug(lFlags)
 End
 
 
 Public Sub JParse_Added(key As String, name As String, value As String, type As String)
   
-  zns.debugger.Message(type & " parent " & modJSONParse.getParent(key) & "key " & key & " contains \"" & name & "\" : " & value, LogLevel.Info)
+  zns.debugger.Message(modJSONParse.getParent(key) & Chr$(9) & key & Chr$(9) & "\"" & name & "\" : " & value & Chr$(9) & type, LogLevel.Info)
   If tvJson.Exist(modJSONParse.getParent(key)) Then 
     tvJson.Add(key, name, m_json_icons[type], modJSONParse.getParent(key))
   Else

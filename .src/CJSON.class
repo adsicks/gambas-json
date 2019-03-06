@@ -47,8 +47,6 @@ Public Function GetNameFromPath(pKey As String) As Variant
   
 End
 
-
-
 Public Sub Clear()
   ' Method Clear
   ' Clears the internal collection of JSON information
@@ -63,16 +61,12 @@ Public Sub Clear()
   m_array_close_count = 0
   m_members_count = 0
   m_line_no = 0
-
   m_url = ""
   m_text = ""
   m_js_type = Me.null
   m_json_col.Clear()
-  
-  
+
 End
-
-
 
 Public Function Open() As Integer
   ' Method Read as Integer
@@ -81,14 +75,10 @@ Public Function Open() As Integer
   ' Returns Error codes in the Future
   Dim js As JSONCollection
   Dim vBuffer As Variant ' variable to hold JSON data while determining the type
-  
- ' If fname = "" Then fname = m_url
- ' m_url = fname 
+   
   m_text = File.Load(m_url)
   vBuffer = JSON.Decode(m_text, False)
   m_js_type = parse(vBuffer, "$") ' Use '$' for root to be consistent with https://goessner.net/articles/JsonPath/ 
-  
- ' Print TypeOf() & " in file " & m_curr_file
 
 End
 
@@ -162,96 +152,99 @@ Dim display_name As String ' Name of object or array to be displayed in GUI
         m_json_col.Default = IIf(pParent = "", vBuffer, m_json_col.Default)
         m_line_no += 1
         m_object_open_count += 1
-        
-        block_name = Right(pParent, Len(pParent) - RInStr(pParent, "/")) ' name of current block
-        block_name = IIf(block_name = "", pName, block_name)      
-        block_name &= pArrayEl
-        If m_debug Then
-          Raise DebugMessage(Hex$(m_line_no, m_line_no_width) & " | " & pParent & "/" & m_object_open_count & "{  : " & m_object_open_count & "{ ", LogLevel.Info)
-          Raise DebugMessage("Found Object Block named " & block_name, LogLevel.Info)
-          ' Print Hex(m_line_no, m_line_no_width) & " | " & pParent & "/" & m_object_open_count & "{  : " & m_object_open_count & "{ "
-          ' Print "Found Object Block named " & block_name 
+
+        ' Set the name of the current block we are in.
+        block_name = Right(pParent, Len(pParent) - RInStr(pParent, "/")) 
+        If block_name = "" Then
+          next_key = pParent & pName & pArrayEl
+        Else
+          next_key = pParent & pArrayEl
         Endif
+        ' block_name = IIf(block_name = "", pName, block_name)      
+        block_name &= pArrayEl
+
+        ' If m_debug Then
+        '   object_close_line = Hex$(m_line_no, m_line_no_width)
+        '   Raise DebugMessage(Hex$(m_line_no, m_line_no_width) & " | " & pParent & "/" & m_object_open_count & "{  : " & m_object_open_count & "{ ", LogLevel.Info)
+        '   Raise DebugMessage("Found Object Block named " & block_name, LogLevel.Info)
+        ' Endif
         
-       
-        object_no = m_object_open_count
-        object_close_line = Hex$(m_line_no, m_line_no_width)
-        ' next_name = "{" & object_no & "}{"
-        next_name = block_name & "{"
-        next_key = pParent & pArrayEl & "{" 'next_name
-        ' display_name = IIf(block_name = "", next_name, block_name)
-        ' next_name = next_name & block_name
-        ' display_name = next_name 
+        ' Setup name to display in the TreeView
+        ' next_name = block_name & "{"
+        
+        ' next_key = pParent & pArrayEl & '"{" '   Right$(pArrayEl, Len(pArrayEl) - 1) ' & "{" ' 
         display_name = block_name
-        Raise Added(next_key, display_name, "{", "Object")
-        ' m_json_col.Add(next_name, next_key)
-         m_json_col.Add("{", next_key)
-         
+        ' next_key = pParent & IIf(display_name = "$", "", display_name)
+        AddMember(next_key, display_name, "{", Me.object)
+        
         For Each vBuf In VBuffer
-          If m_debug Then Raise DebugMessage(" Block name " & block_name & " Contains " & vBuffer.key & " : ", LogLevel.Info)
+          ' If m_debug Then Raise DebugMessage(" Block name " & block_name & " Contains " & vBuffer.key & " : ", LogLevel.Info)
           parse(vBuf, next_key & "/" & vBuffer.key, vBuffer.key) ' why this function is recursive
         Next
+        
         m_line_no += 1
         m_object_close_count += 1
         
-        If m_debug Then Raise DebugMessage(Hex$(m_line_no, m_line_no_width) & " | " & pParent & "/" & object_no & "} from line " & object_close_line, LogLevel.Info)
-       ' next_name = "}{" & object_no & "}" 
-        next_name = "}" & block_name
-        next_key = pParent & "}" & pArrayEl 'next_name
-       ' display_name = IIf(block_name = "", next_name, block_name)
-       ' next_name = next_name & block_name
-        ' display_name = next_name
+        ' If m_debug Then 
+        '   Raise DebugMessage(Hex$(m_line_no, m_line_no_width) & " | " & pParent & "/" & object_no & "} from line " & object_close_line, LogLevel.Info)
+        '   object_close_line = ""
+        ' Endif
+        
+        ' next_name = "}" & block_name
+        next_key &= "}" 'pParent & "}" & pArrayEl ' Right(pArrayEl, Len(pArrayEl) - 1) ' "}" & 
         display_name = block_name
-        Raise Added(next_key, display_name, "}", "Object")
-       ' m_json_col.Add(next_name, next_key)
-        m_json_col.Add("}", next_key)
-        object_close_line = ""
+        ' next_key = pParent & "}" & IIf(display_name = "$", "", display_name)
+        AddMember(next_key, display_name, "}", Me.object)
+
         ret_val = Me.object
       Else If vBuffer Is Variant[] Then
         m_json_col.Default = IIf(pParent = "", vBuffer, m_json_col.Default)
         m_line_no += 1
         m_array_open_count += 1
-        array_close_line = Hex(m_line_no, m_line_no_width)
+                
         array_no = m_array_open_count
         block_name = Right(pParent, Len(pParent) - RInStr(pParent, "/")) ' name of current block
-        
-        If m_debug Then 
-          Raise DebugMessage(Hex$(m_line_no, m_line_no_width) & " | " & pParent & "/" & array_no & "[ : " & m_array_open_count & "[", LogLevel.Info)
-          Raise DebugMessage("Found Array Block named " & block_name, LogLevel.Info)
-          ' Print Hex(m_line_no, m_line_no_width) & " | " & pParent & "/" & array_no & "[ : " & m_array_open_count & "["
-          ' Print "Found Array Block named " & block_name 
-        Endif
-        
-        ' next_name = "[" & pParent & "][" 
-        next_key = pParent & "[" ' & next_name
+        ' 
+        ' If m_debug Then 
+        '   array_close_line = Hex$(m_line_no, m_line_no_width)
+        '   Raise DebugMessage(Hex$(m_line_no, m_line_no_width) & " | " & pParent & "/" & array_no & "[ : " & m_array_open_count & "[", LogLevel.Info)
+        '   Raise DebugMessage("Found Array Block named " & block_name, LogLevel.Info)
+        ' Endif
+
+        next_key = pParent '& "[" 
         next_name = IIf(block_name = "", next_name, next_name & block_name)
-        Raise Added(next_key, next_name, "[", "Array")
-        m_json_col.Add("[", next_key)
+        ' Raise Added(next_key, next_name, "[", "Array")
+        ' m_json_col.Add("[", next_key)
+        AddMember(next_key, next_name, "[", Me.array)
         
         iii = 1
         For Each jsbuffer In vBuffer
-          If m_debug Then Raise DebugMessage("Array position " & iii & " in block named " & block_name, LogLevel.Info)
+          ' If m_debug Then Raise DebugMessage("Array position " & iii & " in block named " & block_name, LogLevel.Info)
           parse(jsBuffer, next_key & "/", next_name, "[" & iii & "]")
           iii += 1
         Next
         m_line_no += 1
         m_array_close_count += 1
         
-        If m_debug Then Raise DebugMessage(Hex(m_line_no, m_line_no_width) & " | " & pParent & "/" & array_no & "] from line " & array_close_line, LogLevel.Info)
-        ' next_name = "][" & pParent & "]"
-        next_key = pParent & "]" ' & next_name
+        ' If m_debug Then 
+        '   Raise DebugMessage(Hex(m_line_no, m_line_no_width) & " | " & pParent & "/" & array_no & "] from line " & array_close_line, LogLevel.Info)
+        '   array_close_line = ""
+        ' Endif
+
+        next_key = pParent & "]" 
         next_name = IIf(block_name = "", next_name, block_name)
-        Raise Added(next_key, next_name, "]", "Array")
-        m_json_col.Add("]", next_key)
         
-        array_close_line = ""
+        ' Raise Added(next_key, next_name, "]", "Array")
+        ' m_json_col.Add("]", next_key)
+        AddMember(next_key, next_name, "]", Me.array)
+        
         ret_val = Me.array
       Else
    
         ' Print "Unknown?"
         Raise DebugMessage("Ignoring Unknown Type at line " & Hex(m_line_no, m_line_no_width), LogLevel.Warning)
         
-      End If
+      Endif
   End Select
  Return ret_val
 End
@@ -266,7 +259,7 @@ Private Sub AddMember(pKey As String, pName As String, pValue As String, pType A
       sType = Choose(pType, "Boolean", "Number", "String", "Array", "Object")
       sType = IIf(sType = Null, "Null", sType)
       pKey = IIf(pKey = "", "/", pKey) ' Make sure key value is not null
-      If m_debug Then Raise DebugMessage(Hex(m_line_no, m_line_no_width) & " | " & pKey & " \"" & pName & "\" : " & IIf(CBool(pValue), "True", "False"), LogLevel.Info)
+      ' If m_debug Then Raise DebugMessage(Hex(m_line_no, m_line_no_width) & " | " & pKey & " ==> \"" & pName & "\" : " & pValue, LogLevel.Info)
       Raise Added(pKey, pName, pValue, sType)
       m_json_col.Add(pValue, pKey)
       m_json_col.Default = IIf(m_members_count = 0, pValue, m_json_col.Default)

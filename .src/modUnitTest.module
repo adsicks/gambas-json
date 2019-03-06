@@ -21,7 +21,7 @@ Public Sub UnitTests(js As CJSON, tvJSON As TreeView)
   zns.debugger.Message("******BEGIN UNIT TEST", LogLevel.Info)
   For Each sFile In Dir("./json-test", "*.json")
     zns.debugger.Message("UNIT TEST * ****** Begin File " & sFile & " Results", LogLevel.Info)
-    ' Print "****** Begin File " & sFile & " Results"
+    zns.debugger.Message("Log Header,Parent,key,name,value,type", LogLevel.Info)
     js.Clear
     tvJson.Clear()
     js.LineNoWidth = 6
