@@ -95,7 +95,7 @@ End
 
 Public Sub tvJson_Click()
 
-  Print "\"" & tvJson.Item.Text & "\" : " & js.GetNameFromPath(tvJson.Item.Key)
+  Print "Key " & tvJson.Item.Key & " ==> \"" & tvJson.Item.Text & "\" : " & js.GetNameFromPath(tvJson.Item.Key)
   
   
 
