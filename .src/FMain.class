@@ -95,7 +95,7 @@ End
 
 Public Sub tvJson_Click()
 
-  Print "Key " & tvJson.Item.Key & " ==> \"" & tvJson.Item.Text & "\" : " & js.GetNameFromPath(tvJson.Item.Key)
+  Print "Parent" & modJSONParse.getParent(tvJson.Item.Key) & "Key " & tvJson.Item.Key & " ==> \"" & tvJson.Item.Text & "\" : " & js.GetNameFromPath(tvJson.Item.Key)
   
   
 

@@ -78,7 +78,7 @@ Public Function Open() As Integer
    
   m_text = File.Load(m_url)
   vBuffer = JSON.Decode(m_text, False)
-  m_js_type = parse(vBuffer, "$") ' Use '$' for root to be consistent with https://goessner.net/articles/JsonPath/ 
+  m_js_type = parse(vBuffer, "/") ' We will make this work like XPath or like any other path we work with 
 
 End
 
@@ -179,7 +179,8 @@ Dim display_name As String ' Name of object or array to be displayed in GUI
         
         For Each vBuf In VBuffer
           ' If m_debug Then Raise DebugMessage(" Block name " & block_name & " Contains " & vBuffer.key & " : ", LogLevel.Info)
-          parse(vBuf, next_key & "/" & vBuffer.key, vBuffer.key) ' why this function is recursive
+          
+          parse(vBuf, IIf(next_key = "/", next_key, next_key & "/") & vBuffer.key, vBuffer.key) ' why this function is recursive
         Next
         
         m_line_no += 1
@@ -191,7 +192,7 @@ Dim display_name As String ' Name of object or array to be displayed in GUI
         ' Endif
         
         ' next_name = "}" & block_name
-        next_key &= "}" 'pParent & "}" & pArrayEl ' Right(pArrayEl, Len(pArrayEl) - 1) ' "}" & 
+        next_key &= "}<" 'pParent & "}" & pArrayEl ' Right(pArrayEl, Len(pArrayEl) - 1) ' "}" & 
         display_name = block_name
         ' next_key = pParent & "}" & IIf(display_name = "$", "", display_name)
         AddMember(next_key, display_name, "}", Me.object)
@@ -220,7 +221,7 @@ Dim display_name As String ' Name of object or array to be displayed in GUI
         iii = 1
         For Each jsbuffer In vBuffer
           ' If m_debug Then Raise DebugMessage("Array position " & iii & " in block named " & block_name, LogLevel.Info)
-          parse(jsBuffer, next_key & "/", next_name, "[" & iii & "]")
+          parse(jsBuffer, next_key, next_name, "[" & iii & "]")
           iii += 1
         Next
         m_line_no += 1
@@ -231,7 +232,7 @@ Dim display_name As String ' Name of object or array to be displayed in GUI
         '   array_close_line = ""
         ' Endif
 
-        next_key = pParent & "]" 
+        next_key = pParent & "]<" 
         next_name = IIf(block_name = "", next_name, block_name)
         
         ' Raise Added(next_key, next_name, "]", "Array")
