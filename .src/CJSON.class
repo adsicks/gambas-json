@@ -222,8 +222,8 @@ Dim display_name As String ' Name of object or array to be displayed in GUI
           ' Print "Found Array Block named " & block_name 
         Endif
         
-        next_name = "[" & pParent & "][" 
-        next_key = pParent & next_name
+        ' next_name = "[" & pParent & "][" 
+        next_key = pParent & "[" ' & next_name
         next_name = IIf(block_name = "", next_name, next_name & block_name)
         Raise Added(next_key, next_name, "[", "Array")
         m_json_col.Add("[", next_key)
@@ -238,9 +238,9 @@ Dim display_name As String ' Name of object or array to be displayed in GUI
         m_array_close_count += 1
         
         If m_debug Then Raise DebugMessage(Hex(m_line_no, m_line_no_width) & " | " & pParent & "/" & array_no & "] from line " & array_close_line, LogLevel.Info)
-        next_name = "][" & pParent & "]"
-        next_key = pParent & next_name
-        next_name = IIf(block_name = "", next_name, next_name & block_name)
+        ' next_name = "][" & pParent & "]"
+        next_key = pParent & "]" ' & next_name
+        next_name = IIf(block_name = "", next_name, block_name)
         Raise Added(next_key, next_name, "]", "Array")
         m_json_col.Add("]", next_key)
         

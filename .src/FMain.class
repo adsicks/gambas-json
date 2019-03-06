@@ -66,7 +66,7 @@ lPath = Application.Path & "/icons/"
    .Add(Picture.Load(lpath & "json-object.png"), "Object")
    .Add(Picture.Load(lpath & "json-string.png"), "String")
    End With
-   lFlags[0] = 0 ' To turn it all on use &H30
+   lFlags[0] = &H30 ' To turn it all on use &H30
    lFlags[1] = 0 ' To turn it all on use &H30
    zns.debugger = New CDebug(lFlags)
 End
