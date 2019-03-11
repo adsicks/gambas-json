@@ -192,7 +192,7 @@ Dim display_name As String ' Name of object or array to be displayed in GUI
         ' Endif
         
         ' next_name = "}" & block_name
-        next_key &= "}<" 'pParent & "}" & pArrayEl ' Right(pArrayEl, Len(pArrayEl) - 1) ' "}" & 
+        next_key &= "~" 'pParent & "}" & pArrayEl ' Right(pArrayEl, Len(pArrayEl) - 1) ' "}" & 
         display_name = block_name
         ' next_key = pParent & "}" & IIf(display_name = "$", "", display_name)
         AddMember(next_key, display_name, "}", Me.object)
@@ -232,7 +232,7 @@ Dim display_name As String ' Name of object or array to be displayed in GUI
         '   array_close_line = ""
         ' Endif
 
-        next_key = pParent & "]<" 
+        next_key = pParent & "~" 
         next_name = IIf(block_name = "", next_name, block_name)
         
         ' Raise Added(next_key, next_name, "]", "Array")

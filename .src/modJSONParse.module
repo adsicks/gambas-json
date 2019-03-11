@@ -14,7 +14,7 @@ Public Function getParent(key As String) As String
       Print "Found ArrayEl " & sArrayEl
       Return sArrayEl
   Endif
-  If String.RInStr(key, "]<") Or If String.RInStr(key, "}<") Then Return Left$(key, Len(key) - 2)
+  If String.RInStr(key, "~") Then Return Left$(key, Len(key) - 1)
     iPos = String.RInStr(key, "/")
     iPos = IIf(iPos > 1, iPos - 1, iPos)
 

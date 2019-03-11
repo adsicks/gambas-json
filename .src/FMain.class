@@ -108,3 +108,15 @@ Public Sub cmdUnitTest_Click()
 
   
 End
+
+Public Sub ColumnView1_Click()
+
+  
+
+End
+
+Public Sub DocumentView1_MouseDown()
+
+  
+
+End
