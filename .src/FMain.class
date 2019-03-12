@@ -2,36 +2,38 @@
 
 Public js As CJSON = New CJSON As "JParse"
 Private m_json_icons As New Collection
-
+Private m_bEdit As Boolean = False ' flag to edit the file text box
 
 Public Sub cmdDecode_Click()
 Dim iResult As Integer
 ' Dim js As New CJSON
+  Dialog.Title = "Choose a file"
+  Dialog.Filter = ["*.json", "JSON Files", "*", "All files"]
+  Dialog.Path = "."
+  If Dialog.OpenFile() Then
+    Return ' User pressed Cancel -
+  Endif
+  txtWorkingFile.Text = Dialog.path 
   js.Clear
   cvJSON.Clear
   'tvJson.Clear()
   js.LineNoWidth = 6
   js.URL = txtWorkingFile.Text
+  txtWorkingFile.Foreground = Color.black
   iResult = js.open()
 End
 
 Public Sub cmdOpen_Click()
 
-Dialog.Title = "Choose a file"
-Dialog.Filter = ["*.json", "JSON Files", "*", "All files"]
-Dialog.Path = "."
-If Dialog.OpenFile() Then
-  Return ' User pressed Cancel -
-Endif
-txtWorkingFile.Text = Dialog.path 
+
 
 End
 
-Public Sub cmbGetName_Click()
-
-  Print js.GetNameFromPath(txtPath.Text)
-
-End
+' Public Sub cmbGetName_Click()
+' 
+'   Print js.GetNameFromPath(txtPath.Text)
+' 
+' End
 
 
 Private Sub DisplayIcons()
@@ -51,6 +53,22 @@ Private Sub DisplayIcons()
   Next
 
 End
+Private Sub ShowIcons()
+  
+  
+  Dim iconKey As String
+  Dim iconName As String
+
+  IconViewIcons.Clear()
+
+  For Each iconKey In Stock.Icons
+
+    iconName = "icon:/medium/" & iconKey
+    IconViewIcons.Add(iconKey, iconKey, Picture[iconName])
+
+  Next
+  
+End
 
 Public Sub Form_Open()
 Dim lPath As String
@@ -66,12 +84,23 @@ lPath = Application.Path & "/icons/"
    .Add(Picture.Load(lpath & "json-number.png"), "Number")
    .Add(Picture.Load(lpath & "json-object.png"), "Object")
    .Add(Picture.Load(lpath & "json-string.png"), "String")
+   .Add(Picture.Load(lpath & "json-name.png"), "Name")
+   .Add(Picture.Load(lpath & "json-value.png"), "Value")
    End With
    lFlags[0] = 0 ' &H30 ' To turn it all on use &H30
    lFlags[1] = &H30 '&H30 ' To turn it all on use &H30
    zns.debugger = New CDebug(lFlags)
    cvJSON.AddColumn("Text", -1)
+   cvJSON.AddColumn("Type", -1)
+   cvJSON.Columns[0].title = "Tree"
+   cvJSON.Columns[1].Title = "Text"
+   cvJSON.Columns[2].Title = "Type"
+   cvJSON.Resizable = True
+   ShowIcons
 End
+
+
+
 
 
 Public Sub JParse_Added(key As String, name As String, value As String, type As String)
@@ -86,9 +115,11 @@ Public Sub JParse_Added(key As String, name As String, value As String, type As 
     cvJson.Add(key, name, m_json_icons[type], modJSONParse.getParent(key))
     ' cvJSON.MoveTo(key)
     cvJSON[key][1] = IIf(name = "", "", "\"" & name & "\" : ") & value
+    cvJSON[key][2] = type
   Else
     cvJson.Add(key, name, m_json_icons[type])
     cvJSON[key][1] = IIf(name = "", "", "\"" & name & "\" : ") & value
+    cvJSON[key][2] = type
   Endif
 End
 
@@ -99,17 +130,23 @@ Public Sub JParse_DebugMessage(msg As String, iLevel As Integer)
   
 End
 
-
-
-
-
-Public Sub tvJson_Click()
-
-  Print "Parent" & modJSONParse.getParent(tvJson.Item.Key) & "Key " & tvJson.Item.Key & " ==> \"" & tvJson.Item.Text & "\" : " & js.GetNameFromPath(tvJson.Item.Key)
+Public Sub JParse_OpenedURL(pURL As String)
   
+    txtWorkingFile.Text = pURL
   
-
 End
+
+
+
+
+' Old Tree View Code marked to be removed by 03-18-19
+' Public Sub tvJson_Click()
+' 
+'   Print "Parent" & modJSONParse.getParent(tvJson.Item.Key) & "Key " & tvJson.Item.Key & " ==> \"" & tvJson.Item.Text & "\" : " & js.GetNameFromPath(tvJson.Item.Key)
+'   
+'   
+' 
+' End
 
 Public Sub cmdUnitTest_Click()
   
@@ -121,12 +158,55 @@ End
 
 Public Sub cvJSON_Click()
 
-  Print "Parent" & modJSONParse.getParent(cvJson.Item.Key) & "Key " & cvJson.Item.Key & " ==> \"" & cvJson.Item.Text & "\" : " & js.GetNameFromPath(cvJson.Item.Key)
+  Print "Parent " & modJSONParse.getParent(cvJson.Item.Key) & "    Key " & cvJson.Item.Key & " ==> \"" & cvJson.Item.Text & "\" : " & js.GetNameFromPath(cvJson.Item.Key)
 
 End
 
-Public Sub DocumentView1_MouseDown()
 
+
+Public Sub Form_Resize()
+
+    
+  cvJSON.h = Me.h - 78
+  cvJSON.W = Me.w - 208
+  tpMain.h = Me.h - 78
+  txtWorkingFile.w = Me.w - 64
+  txtWorkingFile.Foreground = Color.Black
+End
+
+Public Sub txtWorkingFile_DblClick()
   
+  m_bEdit = True
+  txtWorkingFile.Background = Color.White
+End
 
+Public Sub txtWorkingFile_LostFocus()
+  
+  m_bEdit = False
+  txtWorkingFile.Background = Color.Background
+  
+End
+
+Public Sub txtWorkingFile_KeyPress()
+ Dim iResult As Integer
+ 
+ If m_bEdit = False Then 
+  cmdDecode.SetFocus
+  Stop Event
+Endif
+
+ If Asc(Key.text) = 13 Then 
+   m_bEdit = False
+   cmdDecode.SetFocus
+   txtWorkingFile.Background = Color.Background
+   If Exist(txtWorkingFile.Text) Then
+    js.Clear
+    cvJSON.Clear
+    'tvJson.Clear()
+    js.LineNoWidth = 6
+    js.URL = txtWorkingFile.Text
+    txtWorkingFile.Foreground = Color.black
+    iResult = js.open()
+  Endif
+ Endif
 End

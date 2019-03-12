@@ -20,7 +20,7 @@ Public Function getParent(key As String) As String
 
 
   sBuffer = Left$(key, iPos)
-
+  If key = "/" Then sBuffer = "$"
   
   Return sBuffer
   

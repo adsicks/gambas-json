@@ -8,6 +8,7 @@
 Event Added(key As String, name As String, value As String, type As String)
 
 Event DebugMessage(msg As String, iLevel As Integer)
+Event OpenedURL(url As String)
 
 ' 00h = 05h are json types
 ' 10h - 12h are modes local file, internet url, or text assigned to property
@@ -77,9 +78,10 @@ Public Function Open() As Integer
   Dim vBuffer As Variant ' variable to hold JSON data while determining the type
    
   m_text = File.Load(m_url)
+  Raise OpenedURL(m_url)
   vBuffer = JSON.Decode(m_text, False)
   m_js_type = parse(vBuffer, "/") ' We will make this work like XPath or like any other path we work with 
-
+  
 End
 
 Public Function parse(vBuffer As Variant, pParent As String, Optional pName As String, Optional pArrayEl As String) As Integer

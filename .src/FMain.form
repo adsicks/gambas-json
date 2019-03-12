@@ -2,33 +2,75 @@
 
 { Form Form
   MoveScaled(0,0,129,76)
-  { cmdDecode Button
-    MoveScaled(61,66,14,6)
-    Text = ("Load")
-  }
+  NoTabFocus = True
   { txtWorkingFile TextBox
-    MoveScaled(55,1,62,3)
-  }
-  { cmdOpen Button
-    MoveScaled(118,1,5,3)
-    Text = ("") & "..."
-  }
-  { txtPath TextBox
-    MoveScaled(79,5,37,3)
-  }
-  { cmbGetName Button
-    MoveScaled(118,5,6,3)
-    Text = ("") & "..."
-  }
-  { tvJson TreeView
-    MoveScaled(1,6,4,49)
-    Visible = False
-  }
-  { cmdUnitTest Button
-    MoveScaled(41,66,16,6)
-    Text = ("Test")
+    MoveScaled(2,3,112,3)
+    Background = Color.Background
+    Foreground = Color.Black
+    NoTabFocus = True
+    Border = False
   }
   { cvJSON ColumnView
-    MoveScaled(9,11,85,50)
+    MoveScaled(18,8,85,66.25)
+  }
+  { tpMain ToolPanel
+    MoveScaled(1,8,16,60)
+    ToolTip = ("Edits the selected element")
+    Drop = True
+    Count = 3
+    Index = 0
+    Text = ("File")
+    Picture = Picture["icon:/16/file"]
+    { cmdDecode Button
+      MoveScaled(0.5,0,15,5)
+      Text = ("Load")
+      Picture = Picture["icon:/22/open"]
+    }
+    { cmdUnitTest Button
+      MoveScaled(0.5,5,15,5)
+      Text = ("Test")
+      Picture = Picture["icon:/22/tools"]
+    }
+    Index = 1
+    Text = ("Edit")
+    Picture = Picture["icon:/16/edit"]
+    { cmdEditMember Button
+      MoveScaled(0.5,0,15,5)
+      ToolTip = ("Edits the value of the selected object.")
+      Text = ("Value")
+      Picture = Picture["icons/json-value.png"]
+    }
+    { cmdName Button
+      MoveScaled(0.5,5,15,5)
+      ToolTip = ("Edits the name of the current object.")
+      Text = ("Name")
+      Picture = Picture["icons/json-name.png"]
+    }
+    { Button1 Button
+      MoveScaled(0.5,10,15,5)
+      Tag = "Edit the current member."
+      Text = ("Member")
+      Picture = Picture["icons/json-member.png"]
+    }
+    Index = 2
+    Text = ("Add")
+    Picture = Picture["icon:/16/add"]
+    { cmdObject Button
+      MoveScaled(0.5,0,15,5)
+      ToolTip = ("Adds an Object to the selected Collection or Object.")
+      Text = ("Object")
+      Picture = Picture["icons/json-object.png"]
+    }
+    { cmdCollection Button
+      MoveScaled(0.5,5,15,5)
+      ToolTip = ("Adds a Collection or an Array as the value of the current object.")
+      Text = ("Collection")
+      Picture = Picture["icons/json-array.png"]
+    }
+    Index = 0
+  }
+  { IconViewIcons IconView
+    MoveScaled(121,2,4,3)
+    Visible = False
   }
 }
