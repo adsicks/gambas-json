@@ -8,7 +8,8 @@ Public Sub cmdDecode_Click()
 Dim iResult As Integer
 ' Dim js As New CJSON
   js.Clear
-  tvJson.Clear()
+  cvJSON.Clear
+  'tvJson.Clear()
   js.LineNoWidth = 6
   js.URL = txtWorkingFile.Text
   iResult = js.open()
@@ -69,16 +70,25 @@ lPath = Application.Path & "/icons/"
    lFlags[0] = 0 ' &H30 ' To turn it all on use &H30
    lFlags[1] = &H30 '&H30 ' To turn it all on use &H30
    zns.debugger = New CDebug(lFlags)
+   cvJSON.AddColumn("Text", -1)
 End
 
 
 Public Sub JParse_Added(key As String, name As String, value As String, type As String)
   
   zns.debugger.Message(modJSONParse.getParent(key) & Chr$(9) & key & Chr$(9) & "\"" & name & "\" : " & value & Chr$(9) & type, LogLevel.Info)
-  If tvJson.Exist(modJSONParse.getParent(key)) Then 
-    tvJson.Add(key, name, m_json_icons[type], modJSONParse.getParent(key))
+  ' If tvJson.Exist(modJSONParse.getParent(key)) Then 
+  '   tvJson.Add(key, name, m_json_icons[type], modJSONParse.getParent(key))
+  ' Else
+  '   tvJson.Add(key, name, m_json_icons[type])
+  ' Endif
+   If cvJson.Exist(modJSONParse.getParent(key)) Then 
+    cvJson.Add(key, name, m_json_icons[type], modJSONParse.getParent(key))
+    ' cvJSON.MoveTo(key)
+    cvJSON[key][1] = IIf(name = "", "", "\"" & name & "\" : ") & value
   Else
-    tvJson.Add(key, name, m_json_icons[type])
+    cvJson.Add(key, name, m_json_icons[type])
+    cvJSON[key][1] = IIf(name = "", "", "\"" & name & "\" : ") & value
   Endif
 End
 
@@ -103,15 +113,15 @@ End
 
 Public Sub cmdUnitTest_Click()
   
-  modUnitTest.UnitTests(js, tvJson)
+  modUnitTest.UnitTests(js, cvJson)
   ' modUnitTest.PrintDirectory("./json-test")
 
   
 End
 
-Public Sub ColumnView1_Click()
+Public Sub cvJSON_Click()
 
-  
+  Print "Parent" & modJSONParse.getParent(cvJson.Item.Key) & "Key " & cvJson.Item.Key & " ==> \"" & cvJson.Item.Text & "\" : " & js.GetNameFromPath(cvJson.Item.Key)
 
 End
 

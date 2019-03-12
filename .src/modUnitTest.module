@@ -13,7 +13,7 @@ Public Sub PrintDirectory(path As String)
 
 End Sub
 
-Public Sub UnitTests(js As CJSON, tvJSON As TreeView)
+Public Sub UnitTests(js As CJSON, cvJSON As ColumnView)
   
   Dim sFile As String
   Dim iResult As Integer
@@ -23,7 +23,7 @@ Public Sub UnitTests(js As CJSON, tvJSON As TreeView)
     zns.debugger.Message("UNIT TEST * ****** Begin File " & sFile & " Results", LogLevel.Info)
     zns.debugger.Message("Log Header,Parent,key,name,value,type", LogLevel.Info)
     js.Clear
-    tvJson.Clear()
+    cvJson.Clear()
     js.LineNoWidth = 6
     js.URL = "./json-test" &/ sFile
     iResult = js.open()
