@@ -3,6 +3,7 @@
 Public js As CJSON = New CJSON As "JParse"
 Private m_json_icons As New Collection
 Private m_bEdit As Boolean = False ' flag to edit the file text box
+Private m_frm_prop As New FrmProperty[] 
 
 Public Sub cmdDecode_Click()
 Dim iResult As Integer
@@ -159,7 +160,7 @@ End
 Public Sub cvJSON_Click()
 
   Print "Parent " & modJSONParse.getParent(cvJson.Item.Key) & "    Key " & cvJson.Item.Key & " ==> \"" & cvJson.Item.Text & "\" : " & js.GetNameFromPath(cvJson.Item.Key)
-
+  js.FindByKey(cvJson.Item.Key)
 End
 
 
@@ -209,4 +210,16 @@ Endif
     iResult = js.open()
   Endif
  Endif
+End
+
+Public Sub Button2_Click()
+
+Dim idx As Integer
+Dim frm As FrmProperty
+
+idx = m_frm_prop.Count
+frm = New FrmProperty
+m_frm_prop.Add(frm, idx)
+m_frm_prop[idx].Show
+
 End

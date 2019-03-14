@@ -30,6 +30,7 @@ Property {Debug} As Integer ' implement debug levels
 
 Private m_text As String
 Private m_url As String
+Private m_raw_json_object As Variant
 Private m_json_col As New Collection
 Private m_js_type As Integer ' Type of JSON data at the root as described on the right margin at https://www.json.org/
 ' count of objects and arrays. Open and close counts allow for further validation.
@@ -41,6 +42,16 @@ Private m_members_count As Integer
 Private m_line_no As Integer
 Private m_line_no_width As Integer = 4 ' Amount of padding for hexidecimal representation of line numbers. Also sets padding for array and object open locations.
 Private m_debug As Integer = 1 ' TODO: implement this with different debug levels to be set from the implementation level (public property)
+Public Function FindByKey(pKey As String) As Variant
+  Print pKey
+  Dim saBuffer As String[]
+  Dim sBuffer As String
+  saBuffer = Split(pKey, "/")
+  For Each sBuffer In saBuffer
+    Print sBuffer
+  Next
+ Return 
+End
 
 Public Function GetNameFromPath(pKey As String) As Variant
   
@@ -80,6 +91,7 @@ Public Function Open() As Integer
   m_text = File.Load(m_url)
   Raise OpenedURL(m_url)
   vBuffer = JSON.Decode(m_text, False)
+  m_raw_json_object = vBuffer
   m_js_type = parse(vBuffer, "/") ' We will make this work like XPath or like any other path we work with 
   
 End
