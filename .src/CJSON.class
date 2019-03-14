@@ -12,7 +12,7 @@ Event OpenedURL(url As String)
 
 ' 00h = 05h are json types
 ' 10h - 12h are modes local file, internet url, or text assigned to property
-Public Enum local = &H10, {net} = &H11, {text} = &H12, {object} = &H05, {array} = &H04, {string} = &H03, {number} = &H02, {boolean} = &H01, {null} = &H00
+Public Enum local = &H10, {net} = &H11, {text} = &H12, {object} = &H05, {array} = &H04, {string} = &H03, {number} = &H02, {boolean} = &H01, {null} = &H00, {invalid_json_type} = -1
 
 ' Read Only Properties
 Property Read {Type} As Integer ' Returns a type from the above enum for the root document.
@@ -43,17 +43,32 @@ Private m_line_no As Integer
 Private m_line_no_width As Integer = 4 ' Amount of padding for hexidecimal representation of line numbers. Also sets padding for array and object open locations.
 Private m_debug As Integer = 1 ' TODO: implement this with different debug levels to be set from the implementation level (public property)
 Public Function FindByKey(pKey As String) As Variant
-  Print pKey
+  Print "Building search string from: " & pKey
+  ' Dim key_len As Integer = 0 'Length of key to current token.
+  Dim curr_key As String
+  
+  Dim SplitKey As New String[]
   Dim saBuffer As String[]
   Dim sBuffer As String
+  If pKey = "/" Then Return m_raw_json_object
   saBuffer = Split(pKey, "/")
   For Each sBuffer In saBuffer
-    Print sBuffer
+      If sBuffer = "" Then 
+       sBuffer = "/"
+       curr_key = "/"
+      Else If curr_key = "/" Then
+        curr_key &= sBuffer
+      Else
+        curr_key &= "/" & sBuffer
+      Endif
+
+    Print "Adding : " & sBuffer & " => " & GetValueFromPath(curr_key)
+    SplitKey.Add(sBuffer)
   Next
  Return 
 End
 
-Public Function GetNameFromPath(pKey As String) As Variant
+Public Function GetValueFromPath(pKey As String) As Variant
   
   Return m_json_col[pKey]
   
@@ -90,11 +105,58 @@ Public Function Open() As Integer
    
   m_text = File.Load(m_url)
   Raise OpenedURL(m_url)
-  vBuffer = JSON.Decode(m_text, False)
+  vBuffer = JSON.Decode(m_text, True)
   m_raw_json_object = vBuffer
   m_js_type = parse(vBuffer, "/") ' We will make this work like XPath or like any other path we work with 
   
 End
+
+Public Function JSONType(vBuffer As Variant) As Integer
+' Takes a Decoded JSON Array or Object and returns the type from the enum
+ 
+ Dim ret_val As Integer
+ 
+ Select Case TypeOf(vBuffer)
+    Case gb.Boolean
+      ret_val = Me.boolean
+     
+    Case gb.Integer
+      ret_val = Me.number
+
+    Case gb.Single
+      ret_val = Me.number
+      
+    Case gb.Float
+      ret_val = Me.number
+      
+    Case gb.String
+      ret_val = Me.string
+ 
+    Case gb.Null
+      ret_val = Me.null
+ 
+    Case gb.Object
+      If vBuffer Is Collection Then 
+        ret_val = Me.object
+
+      Else If vBuffer Is Variant[] Then
+        ret_val = Me.array
+
+      Else
+        ret_val = Me.invalid_json_type
+        Raise DebugMessage("Ignoring Unknown Type at line " & Hex(m_line_no, m_line_no_width), LogLevel.Warning)
+        
+      Endif
+      Case Else
+        ret_val = Me.invalid_json_type
+        Raise DebugMessage("Ignoring Unknown Type at line " & Hex(m_line_no, m_line_no_width), LogLevel.Warning)
+  End Select
+  
+  Return ret_val
+  
+End
+
+
 
 Public Function parse(vBuffer As Variant, pParent As String, Optional pName As String, Optional pArrayEl As String) As Integer
 ' Method Parse as Integer
@@ -102,7 +164,7 @@ Public Function parse(vBuffer As Variant, pParent As String, Optional pName As S
 ' Also keeps track of the hierarcy of the file with a path
 ' Unnamed arrays (i.e., the root array if found) is only named as a number
 ' Named array elements are followed by the ordinal of their array position
-' Reutrns a JSTYPE
+' Returns a JSTYPE
 ' Moved some repetive functionality to the subroutine AddMember
 ' !!!! This function is recursive. Make certain to keep it so !!!!
 
@@ -124,45 +186,46 @@ Dim next_name As String
 Dim block_name As String ' Name of current object or array
 Dim display_name As String ' Name of object or array to be displayed in GUI
 
- Select Case TypeOf(vBuffer)
-    Case gb.Boolean
+ ret_val = JSONType(vBuffer)
+ Select Case ret_val
+    Case Me.boolean
 
       sBuffer = IIf(CBool(vBuffer), "True", "False")
-      ret_val = Me.boolean
+      'ret_val = Me.boolean
       AddMember(pParent, pName, sBuffer, ret_val)
       
-    Case gb.Integer
+    Case Me.number
 
       sBuffer = CStr(vBuffer)
-      ret_val = Me.number
+      ' ret_val = Me.number
       AddMember(pParent, pName, sBuffer, ret_val)
 
-    Case gb.Single
-
-      sBuffer = CStr(vBuffer)
-      ret_val = Me.number
-      AddMember(pParent, pName, sBuffer, ret_val)
-      
-    Case gb.Float
-
-      sBuffer = CStr(vBuffer)
-      ret_val = Me.number
-      AddMember(pParent, pName, sBuffer, ret_val)
-      
-    Case gb.String
+    ' Case gb.Single
+    ' 
+    '   sBuffer = CStr(vBuffer)
+    '   ret_val = Me.number
+    '   AddMember(pParent, pName, sBuffer, ret_val)
+    '   
+    ' Case gb.Float
+    ' 
+    '   sBuffer = CStr(vBuffer)
+    '   ret_val = Me.number
+    '   AddMember(pParent, pName, sBuffer, ret_val)
+    '   
+    Case Me.string
 
       sBuffer = "\"" & CStr(vBuffer) & "\""
-      ret_val = Me.string
+      ' ret_val = Me.string
       AddMember(pParent, pName, sBuffer, ret_val)
       
-    Case gb.Null
+    Case Me.null
 
       sBuffer = "null"
-      ret_val = Me.null
+      ' ret_val = Me.null
       AddMember(pParent, pName, sBuffer, ret_val)
       
-    Case gb.Object
-      If vBuffer Is Collection Then 
+    Case Me.object
+      ' If vBuffer Is Collection Then 
         m_json_col.Default = IIf(pParent = "", vBuffer, m_json_col.Default)
         m_line_no += 1
         m_object_open_count += 1
@@ -211,8 +274,10 @@ Dim display_name As String ' Name of object or array to be displayed in GUI
         ' next_key = pParent & "}" & IIf(display_name = "$", "", display_name)
         AddMember(next_key, display_name, "}", Me.object)
 
-        ret_val = Me.object
-      Else If vBuffer Is Variant[] Then
+        ' ret_val = Me.object
+      ' Else If vBuffer Is Variant[] Then
+      Case Me.array
+        
         m_json_col.Default = IIf(pParent = "", vBuffer, m_json_col.Default)
         m_line_no += 1
         m_array_open_count += 1
@@ -253,13 +318,13 @@ Dim display_name As String ' Name of object or array to be displayed in GUI
         ' m_json_col.Add("]", next_key)
         AddMember(next_key, next_name, "]", Me.array)
         
-        ret_val = Me.array
-      Else
+        ' ret_val = Me.array
+      Case Else
    
         ' Print "Unknown?"
         Raise DebugMessage("Ignoring Unknown Type at line " & Hex(m_line_no, m_line_no_width), LogLevel.Warning)
         
-      Endif
+      ' Endif
   End Select
  Return ret_val
 End

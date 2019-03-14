@@ -46,11 +46,15 @@
       Text = ("Name")
       Picture = Picture["icons/json-name.png"]
     }
-    { Button1 Button
+    { cmddMember Button
       MoveScaled(0.5,10,15,5)
       Tag = "Edit the current member."
       Text = ("Member")
       Picture = Picture["icons/json-member.png"]
+    }
+    { cmdEdit Button
+      MoveScaled(0.5,15,15,5)
+      Text = ("Edit Selected")
     }
     Index = 2
     Text = ("Add")
@@ -70,7 +74,7 @@
     Index = 0
   }
   { IconViewIcons IconView
-    MoveScaled(121,2,4,3)
+    MoveScaled(121,2,4,4)
     Visible = False
   }
 }

@@ -4,6 +4,9 @@ Public js As CJSON = New CJSON As "JParse"
 Private m_json_icons As New Collection
 Private m_bEdit As Boolean = False ' flag to edit the file text box
 Private m_frm_prop As New FrmProperty[] 
+Private m_selected_key As String
+Property Read SelectedKey As String
+
 
 Public Sub cmdDecode_Click()
 Dim iResult As Integer
@@ -157,14 +160,6 @@ Public Sub cmdUnitTest_Click()
   
 End
 
-Public Sub cvJSON_Click()
-
-  Print "Parent " & modJSONParse.getParent(cvJson.Item.Key) & "    Key " & cvJson.Item.Key & " ==> \"" & cvJson.Item.Text & "\" : " & js.GetNameFromPath(cvJson.Item.Key)
-  js.FindByKey(cvJson.Item.Key)
-End
-
-
-
 Public Sub Form_Resize()
 
     
@@ -212,14 +207,36 @@ Endif
  Endif
 End
 
-Public Sub Button2_Click()
-
-Dim idx As Integer
-Dim frm As FrmProperty
-
-idx = m_frm_prop.Count
-frm = New FrmProperty
-m_frm_prop.Add(frm, idx)
-m_frm_prop[idx].Show
+Public Sub cvJSON_Click()
+  Dim l_key As String 'Buffer for selected key
+  Dim bEditable As Boolean = True
+  l_key = cvJson.Item.Key
+  If Right(l_key, 1) = "~" Then bEditable = False
+  If l_key = "/" Then bEditable = False
+  If l_key = "" Then bEditable = False
+  If bEditable Then m_selected_key = l_key
+  cmdEdit.Enabled = bEditable
 
 End
+Public Sub cmdEdit_Click()
+  Dim l_key As String ' buffer for the key selected
+' Dim idx As Integer
+' Dim frm As FrmProperty
+' 
+' idx = m_frm_prop.Count
+' frm = New FrmProperty
+' m_frm_prop.Add(frm, idx)
+' m_frm_prop[idx].Show
+  l_key = m_selected_key
+  Print "Parent " & modJSONParse.getParent(m_selected_key) & "    Key " & m_selected_key & " ==> \"" & cvJson.Item.Text & "\" : " & js.GetValueFromPath(m_selected_key)
+  
+  js.FindByKey(m_selected_key)
+End
+
+Private Function SelectedKey_Read() As String
+
+  Return m_selected_key
+
+End
+
+
