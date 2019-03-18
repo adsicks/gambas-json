@@ -128,9 +128,9 @@ Public Sub JParse_Added(key As String, name As String, value As String, type As 
 End
 
 
-Public Sub JParse_DebugMessage(msg As String, iLevel As Integer)
+Public Sub JParse_DebugMessage(msg As String, Level As Integer)
   
-  zns.debugger.Message(msg, iLevel)
+  zns.debugger.Message(msg, Level)
   
 End
 

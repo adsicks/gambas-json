@@ -7,7 +7,7 @@
 ' Event to send data to calling program for representation in a Tree View or other hierarchical representation.
 Event Added(key As String, name As String, value As String, type As String)
 
-Event DebugMessage(msg As String, iLevel As Integer)
+Event DebugMessage(msg As String, Level As Integer)
 Event OpenedURL(url As String)
 
 ' 00h = 05h are json types
@@ -48,22 +48,32 @@ Public Function FindByKey(pKey As String) As Variant
   Dim curr_key As String
   
   Dim SplitKey As New String[]
-  Dim saBuffer As String[]
-  Dim sBuffer As String
+  Dim l_json_array As String[]
+  Dim l_json_item As String
   If pKey = "/" Then Return m_raw_json_object
-  saBuffer = Split(pKey, "/")
-  For Each sBuffer In saBuffer
-      If sBuffer = "" Then 
-       sBuffer = "/"
+  l_json_array = Split(pKey, "/")
+  For Each l_json_item In l_json_array
+      If l_json_item = "" Then 
+       l_json_item = "/"
        curr_key = "/"
       Else If curr_key = "/" Then
-        curr_key &= sBuffer
+        curr_key &= l_json_item
       Else
-        curr_key &= "/" & sBuffer
+        curr_key &= "/" & l_json_item
       Endif
-
-    Print "Adding : " & sBuffer & " => " & GetValueFromPath(curr_key)
-    SplitKey.Add(sBuffer)
+      If GetValueFromPath(curr_key) = "[" Then ' Like "*\\[[0-9]\\]" Then 
+        ' Process array here
+        Print "Found Array: " & curr_key  ' An array, parse out the element use an array element of a variant
+      Else If GetValueFromPath(curr_key) = "{" Then
+        Print "Found Object: " & curr_key
+        If l_json_item Like "*\\[*\\]" Then Print "This Object is an Array element."
+      Else
+        Print "Found Object Member: " & l_json_item & " => " & GetValueFromPath(curr_key)
+        
+      End If
+      
+    Print "Adding : " & l_json_item & " => " & GetValueFromPath(curr_key)
+    SplitKey.Add(l_json_item)
   Next
  Return 
 End
@@ -297,7 +307,7 @@ Dim display_name As String ' Name of object or array to be displayed in GUI
         ' m_json_col.Add("[", next_key)
         AddMember(next_key, next_name, "[", Me.array)
         
-        iii = 1
+        iii = 0
         For Each jsbuffer In vBuffer
           ' If m_debug Then Raise DebugMessage("Array position " & iii & " in block named " & block_name, LogLevel.Info)
           parse(jsBuffer, next_key, next_name, "[" & iii & "]")

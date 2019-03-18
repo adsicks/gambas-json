@@ -98,9 +98,9 @@ Private Function GenerateLogFileName() As String
   
 End
 
-Public Function Message(msg As String, iLevel As Integer) As Integer
+Public Function Message(msg As String, Level As Integer) As Integer
   ' Passes message and level on to complex logger, reutrns status
-  m_MainLog.Log(msg, iLevel)
+  m_MainLog.Log(msg, Level)
   
   
 End
