@@ -3,15 +3,15 @@
 Public Function getParent(key As String) As String
   
   Dim iPos As Integer
-  Dim sBuffer As String
+  Dim ret_parent As String
   Dim sArrayEl As String
   
   If String.RInStr(key, "]") = Len(key) Then 
-     Print "element of array found"
+     ' Print "element of array found"
    '  iPos = String.RInStr(key, "[")
       iPos = String.RInStr(key, "[") - 1
       sArrayEl = Left$(key, iPos)
-      Print "Found ArrayEl " & sArrayEl
+      ' Print "Found ArrayEl " & sArrayEl
       Return sArrayEl
   Endif
   If String.RInStr(key, "~") Then Return Left$(key, Len(key) - 1)
@@ -19,10 +19,10 @@ Public Function getParent(key As String) As String
     iPos = IIf(iPos > 1, iPos - 1, iPos)
 
 
-  sBuffer = Left$(key, iPos)
-  If key = "/" Then sBuffer = "$"
+  ret_parent = Left$(key, iPos)
+  If key = "/" Then ret_parent = "$"
   
-  Return sBuffer
+  Return ret_parent
   
   
 End

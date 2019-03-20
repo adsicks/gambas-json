@@ -111,22 +111,22 @@ Public Function Open() As Integer
   ' Return 0 for success
   ' Returns Error codes in the Future
   Dim js As JSONCollection
-  Dim vBuffer As Variant ' variable to hold JSON data while determining the type
+  Dim l_JSON As Variant ' variable to hold JSON data while determining the type
    
   m_text = File.Load(m_url)
   Raise OpenedURL(m_url)
-  vBuffer = JSON.Decode(m_text, True)
-  m_raw_json_object = vBuffer
-  m_js_type = parse(vBuffer, "/") ' We will make this work like XPath or like any other path we work with 
+  l_JSON = JSON.Decode(m_text, True)
+  m_raw_json_object = l_JSON
+  m_js_type = parse(l_JSON, "/") ' We will make this work like XPath or like any other path we work with 
   
 End
 
-Public Function JSONType(vBuffer As Variant) As Integer
+Public Function JSONType(argJSON As Variant) As Integer
 ' Takes a Decoded JSON Array or Object and returns the type from the enum
  
  Dim ret_val As Integer
  
- Select Case TypeOf(vBuffer)
+ Select Case TypeOf(argJSON)
     Case gb.Boolean
       ret_val = Me.boolean
      
@@ -146,10 +146,10 @@ Public Function JSONType(vBuffer As Variant) As Integer
       ret_val = Me.null
  
     Case gb.Object
-      If vBuffer Is Collection Then 
+      If argJSON Is Collection Then 
         ret_val = Me.object
 
-      Else If vBuffer Is Variant[] Then
+      Else If argJSON Is Variant[] Then
         ret_val = Me.array
 
       Else
@@ -168,7 +168,7 @@ End
 
 
 
-Public Function parse(vBuffer As Variant, pParent As String, Optional pName As String, Optional pArrayEl As String) As Integer
+Public Function parse(argJson As Variant, p_Parent As String, Optional p_Name As String, Optional p_ArrayEl As String) As Integer
 ' Method Parse as Integer
 ' Parses JSON data down to a valid value as listed on https://www.json.org/
 ' Also keeps track of the hierarcy of the file with a path
@@ -179,9 +179,8 @@ Public Function parse(vBuffer As Variant, pParent As String, Optional pName As S
 ' !!!! This function is recursive. Make certain to keep it so !!!!
 
 ' temp buffers
-Dim jsBuffer As Collection
-Dim vBuf As Variant
-Dim sBuffer As String
+Dim l_json_buffer As Variant
+Dim l_member_value As String
 ' counter variable
 Dim iii As Integer
 ' reutrn buffer
@@ -196,19 +195,19 @@ Dim next_name As String
 Dim block_name As String ' Name of current object or array
 Dim display_name As String ' Name of object or array to be displayed in GUI
 
- ret_val = JSONType(vBuffer)
+ ret_val = JSONType(argJSON)
  Select Case ret_val
     Case Me.boolean
 
-      sBuffer = IIf(CBool(vBuffer), "True", "False")
+      l_member_value = IIf(CBool(argJSON), "True", "False")
       'ret_val = Me.boolean
-      AddMember(pParent, pName, sBuffer, ret_val)
+      AddMember(p_Parent, p_Name, l_member_value, ret_val)
       
     Case Me.number
 
-      sBuffer = CStr(vBuffer)
+      l_member_value = CStr(argJSON)
       ' ret_val = Me.number
-      AddMember(pParent, pName, sBuffer, ret_val)
+      AddMember(p_Parent, p_Name, l_member_value, ret_val)
 
     ' Case gb.Single
     ' 
@@ -224,31 +223,31 @@ Dim display_name As String ' Name of object or array to be displayed in GUI
     '   
     Case Me.string
 
-      sBuffer = "\"" & CStr(vBuffer) & "\""
+      l_member_value = "\"" & CStr(argJSON) & "\""
       ' ret_val = Me.string
-      AddMember(pParent, pName, sBuffer, ret_val)
+      AddMember(p_Parent, p_Name, l_member_value, ret_val)
       
     Case Me.null
 
-      sBuffer = "null"
+      l_member_value = "null"
       ' ret_val = Me.null
-      AddMember(pParent, pName, sBuffer, ret_val)
+      AddMember(p_Parent, p_Name, l_member_value, ret_val)
       
     Case Me.object
       ' If vBuffer Is Collection Then 
-        m_json_col.Default = IIf(pParent = "", vBuffer, m_json_col.Default)
+        m_json_col.Default = IIf(p_Parent = "", argJSON, m_json_col.Default)
         m_line_no += 1
         m_object_open_count += 1
 
         ' Set the name of the current block we are in.
-        block_name = Right(pParent, Len(pParent) - RInStr(pParent, "/")) 
+        block_name = Right(p_Parent, Len(p_Parent) - RInStr(p_Parent, "/")) 
         If block_name = "" Then
-          next_key = pParent & pName & pArrayEl
+          next_key = p_Parent & p_Name & p_ArrayEl
         Else
-          next_key = pParent & pArrayEl
+          next_key = p_Parent & p_ArrayEl
         Endif
         ' block_name = IIf(block_name = "", pName, block_name)      
-        block_name &= pArrayEl
+        block_name &= p_ArrayEl
 
         ' If m_debug Then
         '   object_close_line = Hex$(m_line_no, m_line_no_width)
@@ -264,10 +263,10 @@ Dim display_name As String ' Name of object or array to be displayed in GUI
         ' next_key = pParent & IIf(display_name = "$", "", display_name)
         AddMember(next_key, display_name, "{", Me.object)
         
-        For Each vBuf In VBuffer
+        For Each l_json_buffer In argJSON
           ' If m_debug Then Raise DebugMessage(" Block name " & block_name & " Contains " & vBuffer.key & " : ", LogLevel.Info)
           
-          parse(vBuf, IIf(next_key = "/", next_key, next_key & "/") & vBuffer.key, vBuffer.key) ' why this function is recursive
+          parse(l_json_buffer, IIf(next_key = "/", next_key, next_key & "/") & argJSON.key, argJSON.key) ' why this function is recursive
         Next
         
         m_line_no += 1
@@ -288,12 +287,12 @@ Dim display_name As String ' Name of object or array to be displayed in GUI
       ' Else If vBuffer Is Variant[] Then
       Case Me.array
         
-        m_json_col.Default = IIf(pParent = "", vBuffer, m_json_col.Default)
+        m_json_col.Default = IIf(p_Parent = "", argJSON, m_json_col.Default)
         m_line_no += 1
         m_array_open_count += 1
                 
         array_no = m_array_open_count
-        block_name = Right(pParent, Len(pParent) - RInStr(pParent, "/")) ' name of current block
+        block_name = Right(p_Parent, Len(p_Parent) - RInStr(p_Parent, "/")) ' name of current block
         ' 
         ' If m_debug Then 
         '   array_close_line = Hex$(m_line_no, m_line_no_width)
@@ -301,16 +300,16 @@ Dim display_name As String ' Name of object or array to be displayed in GUI
         '   Raise DebugMessage("Found Array Block named " & block_name, LogLevel.Info)
         ' Endif
 
-        next_key = pParent '& "[" 
+        next_key = p_Parent '& "[" 
         next_name = IIf(block_name = "", next_name, next_name & block_name)
         ' Raise Added(next_key, next_name, "[", "Array")
         ' m_json_col.Add("[", next_key)
         AddMember(next_key, next_name, "[", Me.array)
         
         iii = 0
-        For Each jsbuffer In vBuffer
+        For Each l_json_buffer In argJSON
           ' If m_debug Then Raise DebugMessage("Array position " & iii & " in block named " & block_name, LogLevel.Info)
-          parse(jsBuffer, next_key, next_name, "[" & iii & "]")
+          parse(l_json_buffer, next_key, next_name, "[" & iii & "]")
           iii += 1
         Next
         m_line_no += 1
@@ -321,7 +320,7 @@ Dim display_name As String ' Name of object or array to be displayed in GUI
         '   array_close_line = ""
         ' Endif
 
-        next_key = pParent & "~" 
+        next_key = p_Parent & "~" 
         next_name = IIf(block_name = "", next_name, block_name)
         
         ' Raise Added(next_key, next_name, "]", "Array")
@@ -339,20 +338,20 @@ Dim display_name As String ' Name of object or array to be displayed in GUI
  Return ret_val
 End
 
-Private Sub AddMember(pKey As String, pName As String, pValue As String, pType As Integer)
+Private Sub AddMember(p_Key As String, p_Name As String, p_Value As String, p_Type As Integer)
 ' Added to clean up some code, make it more readable and easier to maintain
 ' this is the repetitive functions found in the Select Case tree in function parse.
 ' I also set this up so in the future debugging can be turned on and off easier
       Dim sType As String
       m_line_no += 1
       ' These strings for the types must match what is in the icon collection. consider moving the collection of icons to this class.
-      sType = Choose(pType, "Boolean", "Number", "String", "Array", "Object")
+      sType = Choose(p_Type, "Boolean", "Number", "String", "Array", "Object")
       sType = IIf(sType = Null, "Null", sType)
-      pKey = IIf(pKey = "", "/", pKey) ' Make sure key value is not null
+      p_Key = IIf(p_Key = "", "/", p_Key) ' Make sure key value is not null
       ' If m_debug Then Raise DebugMessage(Hex(m_line_no, m_line_no_width) & " | " & pKey & " ==> \"" & pName & "\" : " & pValue, LogLevel.Info)
-      Raise Added(pKey, pName, pValue, sType)
-      m_json_col.Add(pValue, pKey)
-      m_json_col.Default = IIf(m_members_count = 0, pValue, m_json_col.Default)
+      Raise Added(p_Key, p_Name, p_Value, sType)
+      m_json_col.Add(p_Value, p_Key)
+      m_json_col.Default = IIf(m_members_count = 0, p_Value, m_json_col.Default)
       m_members_count += 1
   
 End
@@ -379,11 +378,11 @@ End
 
 Private Function NamedType_Read() As String
 
-  Dim sBuffer As String
+  Dim ret_named_type As String
   
-  sBuffer = Choose(m_js_type, "Boolean", "Number", "String", "Array", "Object")
-  sBuffer = IIf(sBuffer = Null, "null", sBuffer)
-  Return sBuffer
+  ret_named_type = Choose(m_js_type, "Boolean", "Number", "String", "Array", "Object")
+  ret_named_type = IIf(ret_named_type = Null, "null", ret_named_type)
+  Return ret_named_type
 
 End
 
