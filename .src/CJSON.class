@@ -42,6 +42,29 @@ Private m_members_count As Integer
 Private m_line_no As Integer
 Private m_line_no_width As Integer = 4 ' Amount of padding for hexidecimal representation of line numbers. Also sets padding for array and object open locations.
 Private m_debug As Integer = 1 ' TODO: implement this with different debug levels to be set from the implementation level (public property)
+
+Public Function Find(p_Key As String) As Variant
+
+
+  If m_json_col[p_key] = "{" Then Print "This is the beginning of an object"
+  If m_json_col[p_key] = "[" Then Print "This is the beginning of an array"
+  'Print m_json_col[p_key] & " changed to " & p_Value
+  
+  If p_Key Like "*\\[*\\]" Then Print "This Object is an Array element."
+  
+End
+
+Public Function Edit(p_Key As String, p_Value As String) As Integer
+
+
+  If m_json_col[p_key] = "{" Then Print "This is the beginning of an object"
+  If m_json_col[p_key] = "[" Then Print "This is the beginning of an array"
+  Print m_json_col[p_key] & " changed to " & p_Value
+  
+  If p_Key Like "*\\[*\\]" Then Print "This Object is an Array element."
+  
+End
+
 Public Function FindByKey(pKey As String) As Variant
   Print "Building search string from: " & pKey
   ' Dim key_len As Integer = 0 'Length of key to current token.
@@ -53,7 +76,13 @@ Public Function FindByKey(pKey As String) As Variant
   If pKey = "/" Then Return m_raw_json_object
   l_json_array = Split(pKey, "/")
   For Each l_json_item In l_json_array
-      If l_json_item = "" Then 
+      If l_json_item = "$" Then
+        Print "Found Root Operator in search string"
+      Else If l_json_item = "." Then
+        Print "Found Current Operator in search string"
+      Else If l_json_item = ".." Then
+        Print "Found Parent Operator in search string"
+      Else If l_json_item = "" Then 
        l_json_item = "/"
        curr_key = "/"
       Else If curr_key = "/" Then
@@ -61,6 +90,7 @@ Public Function FindByKey(pKey As String) As Variant
       Else
         curr_key &= "/" & l_json_item
       Endif
+      
       If GetValueFromPath(curr_key) = "[" Then ' Like "*\\[[0-9]\\]" Then 
         ' Process array here
         Print "Found Array: " & curr_key  ' An array, parse out the element use an array element of a variant

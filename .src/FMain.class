@@ -228,9 +228,10 @@ Public Sub cmdEdit_Click()
 ' m_frm_prop.Add(frm, idx)
 ' m_frm_prop[idx].Show
   l_key = m_selected_key
-  Print "Parent " & modJSONParse.getParent(m_selected_key) & "    Key " & m_selected_key & " ==> \"" & cvJson.Item.Text & "\" : " & js.GetValueFromPath(m_selected_key)
+  'Print "Parent " & modJSONParse.getParent(m_selected_key) & "    Key " & m_selected_key & " ==> \"" & cvJson.Item.Text & "\" : " & js.GetValueFromPath(m_selected_key)
   
-  js.FindByKey(m_selected_key)
+  'js.FindByKey(m_selected_key)
+  js.Edit(l_key, "Test")
 End
 
 Private Function SelectedKey_Read() As String
@@ -239,4 +240,14 @@ Private Function SelectedKey_Read() As String
 
 End
 
+
+
+Public Sub cmdFind_Click()
+
+  Dim l_key As String ' buffer for the key selected
+
+  l_key = m_selected_key
+
+  js.FindByKey(l_key)
+End
 
